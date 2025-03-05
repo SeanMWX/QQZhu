@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>翻唱歌手主页</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> <!-- FontAwesome 图标 -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('/static/background.jpg'); /* 背景图 */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* 背景图固定 */
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* 内容从顶部开始 */
+            color: #333;
+        }
+        /* 导航栏样式 */
+        .navbar {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95); /* 更浅的背景 */
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: #888; /* 浅灰色文字 */
+            text-decoration: none;
+            font-size: 18px;
+            margin: 0 25px; /* 增加间距 */
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar a:hover {
+            background-color: rgba(108, 122, 224, 0.1); /* 浅蓝色背景 */
+            color: #6c7ae0; /* 浅蓝色文字 */
+        }
+        .intro {
+            background-color: rgba(255, 255, 255, 0.9); /* 歌手信息背景 */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .intro img {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            float: left;
+            margin-right: 20px;
+        }
+        .intro h2 {
+            font-size: 24px;
+            margin-top: 0;
+        }
+        .intro h2 a {
+            color: #6c7ae0; /* 浅蓝色链接 */
+            text-decoration: none;
+        }
+        .intro h2 a:hover {
+            text-decoration: underline;
+        }
+        .intro p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .song-list {
+            background-color: rgba(255, 255, 255, 0.9); /* 歌曲列表背景 */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        .filter-bar {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .filter-bar input,
+        .filter-bar select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            flex: 1;
+            min-width: 200px;
+            background-color: white;
+        }
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #aaa;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #6c7ae0; /* 浅蓝色表头 */
+            color: white;
+            font-size: 18px;
+        }
+        tr {
+            cursor: pointer; /* 鼠标悬停时显示手型 */
+        }
+        tr:hover {
+            background-color: rgba(241, 241, 241, 0.7); /* 行悬停效果 */
+        }
+        a {
+            color: #6c7ae0; /* 浅蓝色链接 */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <a href="#live">直播间</a>
+        <a href="#playlist">歌单</a>
+        <a href="#history">垂名青史</a>
+        <a href="#rank">圣人排行榜</a>
+    </div>
+
+    <!-- 歌手介绍 -->
+    <div class="intro">
+        <img src="/static/singer.jpg" alt="歌手图片"> <!-- 歌手图片 -->
+        <h2><a href="https://space.bilibili.com/3546697030437325" target="_blank">卿卿竹Sokach</a></h2>
+        <p>
+            这里是卿卿呀 —— 一只来自四川的可爱熊猫猫🐱 <br/>
+            😊 粉丝牌首牌牌点歌喔！ 😊 告白花束点歌喔！ 😊 舰长 点歌月卡 + 学歌卡！ <br/>
+            粉丝群群：435951595。 <br/>
+            谢谢你的关注~~！
+        </p>
+    </div>
+
+    <!-- 歌曲列表 -->
+    <div class="song-list">
+        <div class="filter-bar">
+            <input type="text" id="filter-name" placeholder="搜索歌名">
+            <input type="text" id="filter-artist" placeholder="搜索歌手">
+            <select id="filter-language">
+                <option value="">所有语言</option>
+                {% for lang in languages %}
+                <option value="{{ lang }}">{{ lang }}</option>
+                {% endfor %}
+            </select>
+            <select id="filter-genre">
+                <option value="">所有风格</option>
+                {% for genre in genres %}
+                <option value="{{ genre }}">{{ genre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>歌名</th>
+                    <th>歌手</th>
+                    <th>语言</th>
+                    <th>风格</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="songs">
+                {% for song in songs %}
+                <tr data-song-name="{{ song.name }}">
+                    <td>{{ song.name }}</td>
+                    <td>{{ song.artist }}</td>
+                    <td>{{ song.language }}</td>
+                    <td>{{ song.genre }}</td>
+                    <td>
+                        {% if song.url != '-' %}
+                        <a href="{{ song.url }}" target="_blank"><i class="fas fa-play"></i> 播放</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // 复制歌名
+        function copySongName(event) {
+            const row = event.currentTarget;
+            const songName = row.getAttribute('data-song-name'); // 获取歌名
+
+            // 复制到剪贴板
+            navigator.clipboard.writeText(songName)
+                .then(() => {
+                    alert('歌名已复制，快去点歌吧~');
+                })
+                .catch(() => {
+                    alert('复制失败，请手动复制。');
+                });
+        }
+
+        // 绑定点击事件
+        document.querySelectorAll('#songs tr').forEach(row => {
+            row.addEventListener('click', copySongName);
+        });
+
+        // 过滤歌曲
+        function filterSongs() {
+            const nameFilter = document.getElementById('filter-name').value.toLowerCase();
+            const artistFilter = document.getElementById('filter-artist').value.toLowerCase();
+            const languageFilter = document.getElementById('filter-language').value.toLowerCase();
+            const genreFilter = document.getElementById('filter-genre').value.toLowerCase();
+
+            const rows = document.querySelectorAll('#songs tr');
+            rows.forEach(row => {
+                const name = row.cells[0].textContent.toLowerCase();
+                const artist = row.cells[1].textContent.toLowerCase();
+                const language = row.cells[2].textContent.toLowerCase();
+                const genre = row.cells[3].textContent.toLowerCase();
+
+                if (name.includes(nameFilter) &&
+                    artist.includes(artistFilter) &&
+                    (languageFilter === '' || language === languageFilter) &&
+                    (genreFilter === '' || genre === genreFilter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        // 绑定过滤事件
+        document.getElementById('filter-name').addEventListener('input', filterSongs);
+        document.getElementById('filter-artist').addEventListener('input', filterSongs);
+        document.getElementById('filter-language').addEventListener('change', filterSongs);
+        document.getElementById('filter-genre').addEventListener('change', filterSongs);
+    </script>
+</body>
+</html>
