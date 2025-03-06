@@ -1,3 +1,14 @@
+DROP TABLE IF EXISTS fans;
+
+-- 创建 fans 表
+CREATE TABLE fans (
+    id BIGINT PRIMARY KEY,  -- 使用 BIGINT 类型
+    name VARCHAR(255) NOT NULL,
+    bili_name VARCHAR(255),  -- 粉丝的 B 站昵称
+    bili_face VARCHAR(255)   -- 粉丝的头像链接
+);
+
+
 INSERT INTO fans (id, name, bili_name, bili_face) VALUES
 (3546697030437325, '卿卿竹', '卿卿竹Sokach', 'https://i1.hdslb.com/bfs/face/bde8df44e3d227c5bcf89342e7ddd46f9c5f0042.jpg'),
 (2473359, '星海', '星海゙', 'https://i0.hdslb.com/bfs/face/7ac3761c94f580d52ae18635830740b594174df9.jpg'),
@@ -24,4 +35,7 @@ INSERT INTO fans (id, name, bili_name, bili_face) VALUES
 (668987788, '炮车', '炮车本车', 'https://i1.hdslb.com/bfs/face/0553040deefe0cb2d04be7c9c223a5c9084c0666.jpg'),
 (6197081, '毛毛虫', 'irrrrrrrrrrrrrn', 'https://i2.hdslb.com/bfs/face/697ba4721106564a9e7327cd4abc0e01d9d04d88.jpg'),
 (3546842853804310, '仓仓', '冰yoo', 'https://i1.hdslb.com/bfs/face/980e0576ff75cacd1abeaa280282b671d053f078.jpg'),
-(87380649, '池骋', '池骋不是池聘', 'https://i0.hdslb.com/bfs/face/860201b53d0c3c850a267853ba2981dd779ed9f9.jpg');
+(87380649, '池骋', '池骋不是池聘', 'https://i0.hdslb.com/bfs/face/860201b53d0c3c850a267853ba2981dd779ed9f9.jpg'),
+(7191759, '五万', '第一步先赚五万块', 'https://i0.hdslb.com/bfs/face/3c980a891e37eb8de537c95e3243e60eb875765f.jpg'),
+(31706255, '希希姐姐', '希希猫条', 'https://i2.hdslb.com/bfs/face/f2632e023a27dff817fed8ba2692002e65c67efd.jpg'),
+(21128569, '大大胖', '闲昼听曲幽夜观澜', 'https://i1.hdslb.com/bfs/face/bdcc3a94799368cbaec219f2a0762c8b4601e222.webp');

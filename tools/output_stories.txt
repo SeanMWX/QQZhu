@@ -46,7 +46,25 @@ INSERT INTO stories (title, content) VALUES
 ('别来沾边！', '她真的很恐怖！<br/>
 <img src="https://i.ibb.co/KzmWQR8X/Weixin-Image-20250306105418.png" alt="Weixin-Image-20250306105418" border="0">'),
 ('东莞的秘书', '星海说过一句骇人听闻的话，“东莞的秘书我真的都玩穿了”。很恐怖，很恐怖好吧！<br/>
-<img src="https://i.ibb.co/nGDRYfJ/Weixin-Image-20250306105806.png" alt="Weixin-Image-20250306105806" border="0">');
+<img src="https://i.ibb.co/nGDRYfJ/Weixin-Image-20250306105806.png" alt="Weixin-Image-20250306105806" border="0">'),
+('鱼丸和汉堡的爱恨情仇', '鱼丸老板 和 汉堡改改 的爱恨情仇。<br/>
+<img src="https://i.ibb.co/xVvgm4N/Weixin-Image-20250306140717.png" alt="Weixin-Image-20250306140717" border="0">
+<img src="https://i.ibb.co/fdDRCHVw/Weixin-Image-20250306140714.png" alt="Weixin-Image-20250306140714" border="0">'),
+('鱼丸老板的情人节活动', '鱼丸在洗脚城，提起了裤子，说到：“我结束了”。<br/>
+<img src="https://i.ibb.co/1fqMfTTK/Weixin-Image-20250306140851.png" alt="Weixin-Image-20250306140851" border="0">'),
+('汉堡改改的炫光五彩大追追', '<img src="https://i.ibb.co/KpbDQw5z/Weixin-Image-20250306141026.png" alt="Weixin-Image-20250306141026" border="0">'),
+('这个世界被蛤蟆占领了', '一觉醒来，发现这个世界疯了。<br/>
+<img src="https://i.ibb.co/9kyBVynM/Weixin-Image-20250306141114.png" alt="Weixin-Image-20250306141114" border="0">'),
+('希希姐姐', '直播间的秋名山车神！<br/>
+<img src="https://i.ibb.co/FQ4cCXB/Weixin-Image-20250306141800.png" alt="Weixin-Image-20250306141800" border="0">
+<img src="https://i.ibb.co/sp3m2hDg/Weixin-Image-20250306141757.png" alt="Weixin-Image-20250306141757" border="0">'),
+('五万桑', '五万师傅！性学PhD。什么爱情相关的技能都会！'),
+('黄海自爆辣', '星海赛季被加强了，变成了黄海，我勒个豆啊！<br/>
+<img src="https://i.ibb.co/S7tM3RWG/Weixin-Image-20250306142857.png" alt="Weixin-Image-20250306142857" border="0">
+<img src="https://i.ibb.co/GQ4cswSY/Weixin-Image-20250306142852.png" alt="Weixin-Image-20250306142852" border="0">
+<img src="https://i.ibb.co/pB3cxHYw/Weixin-Image-20250306142848.png" alt="Weixin-Image-20250306142848" border="0">
+<img src="https://i.ibb.co/4RyYwhDn/Weixin-Image-20250306142843.png" alt="Weixin-Image-20250306142843" border="0">'),
+('黄豆豆的藏头露尾诗', '<img src="https://i.ibb.co/X0b1Lm1/Weixin-Image-20250306143256.jpg" alt="Weixin-Image-20250306143256" border="0">');
 
 INSERT INTO story_fans (story_id, fan_id) VALUES
 (1, 3546637586664005),
@@ -71,4 +89,13 @@ INSERT INTO story_fans (story_id, fan_id) VALUES
 (13, 243961884),
 (13, 21743321),
 (14, 3546697030437325),
-(15, 2473359);
+(15, 2473359),
+(16, 512639746),
+(16, 507754474),
+(17, 507754474),
+(18, 512639746),
+(19, 3546697030437325),
+(20, 31706255),
+(21, 7191759),
+(22, 2473359),
+(23, 3546637586664005);

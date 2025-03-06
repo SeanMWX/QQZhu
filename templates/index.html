@@ -304,14 +304,25 @@
         function copySongName(event) {
             const songName = event.currentTarget.getAttribute('data-song-name'); // 获取歌名
 
-            // 复制到剪贴板
-            navigator.clipboard.writeText(songName)
-                .then(() => {
-                    alert('歌名已复制，快去点歌吧~');
-                })
-                .catch(() => {
-                    alert('复制失败，请手动复制。');
-                });
+            // 检查是否支持 navigator.clipboard
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(songName)
+                    .then(() => {
+                        alert('歌名已复制，快去点歌吧~');
+                    })
+                    .catch(() => {
+                        alert('复制失败，请手动复制。');
+                    });
+            } else {
+                // 使用备用方法（document.execCommand）
+                const tempInput = document.createElement('input');
+                tempInput.value = songName;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                alert('歌名已复制，快去点歌吧~');
+            }
         }
 
         // 绑定点击事件

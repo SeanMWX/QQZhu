@@ -7,6 +7,7 @@ import asyncio
 import json
 import aiohttp
 import re
+from pypinyin import pinyin, Style
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
     def optionxform(self, optionstr):
@@ -39,12 +40,38 @@ async def create_db_pool(loop, **db_config):
     return await aiomysql.create_pool(loop=loop, **db_config)
 
 async def fetch_songs(pool):
-    """Fetches all songs from the database."""
+    """Fetches all songs from the database and sorts them according to the specified rules."""
     async with pool.acquire() as conn:
         async with conn.cursor(aiomysql.DictCursor) as cur:
             await cur.execute("SELECT name, artist, language, genre, url FROM songs")  # 查询所有歌曲
             songs = await cur.fetchall()
-    return songs
+
+    # 自定义排序规则
+    def sort_key(song):
+        name = song['name']
+        language = song['language']
+
+        # 1. 中文在前，其他语言在后
+        language_priority = 0 if language == '中文' else 1
+
+        # 2. 在同一语言中，字数少的在前
+        word_count = len(name)
+
+        # 3. 在同一个字数中，按照拼音或字母排序
+        if language == '中文':
+            # 将中文转换为拼音（全拼），用于排序
+            pinyin_name = ''.join([item[0] for item in pinyin(name, style=Style.NORMAL)])
+            name_for_sort = pinyin_name
+        else:
+            # 其他语言直接使用原名字（转换为小写，确保排序不区分大小写）
+            name_for_sort = name.lower()
+
+        return (language_priority, word_count, name_for_sort)
+
+    # 对歌曲进行排序
+    sorted_songs = sorted(songs, key=sort_key)
+
+    return sorted_songs
 
 async def fetch_unique_languages(pool):
     """从数据库中获取唯一的语言列表"""
@@ -207,7 +234,7 @@ async def fetch_story_by_id(pool, story_id):
 async def index(request):
     """Handles the index route."""
     pool = request.app['db_pool']
-    songs = await fetch_songs(pool)  # 获取所有歌曲
+    songs = await fetch_songs(pool)  # 获取并排序所有歌曲
     languages = await fetch_unique_languages(pool)  # 获取唯一的语言列表
     genres = await fetch_unique_genres(pool)  # 获取唯一的风格列表
     return aiohttp_jinja2.render_template('index.html', request, {
