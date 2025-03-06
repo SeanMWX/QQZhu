@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ story.title }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 复用垂名青史列表页的样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('/static/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #333;
+        }
+        .navbar {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: #888;
+            text-decoration: none;
+            font-size: 18px;
+            margin: 0 25px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar a:hover {
+            background-color: rgba(108, 122, 224, 0.1);
+            color: #6c7ae0;
+        }
+        .story-detail {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px 0;
+        }
+        .story-detail h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+        .story-detail p {
+            margin: 20px 0 0;
+            font-size: 18px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="https://live.bilibili.com/1825831614">直播间</a>
+        <a href="/">歌单</a>
+        <a href="/history">垂名青史</a>
+        <a href="/rank">圣人排行榜</a>
+    </div>
+
+    <div class="story-detail">
+        <h1>{{ story.title }}</h1>
+        <p>圣人：
+            {% for fan in story.fans %}
+            <a href="https://space.bilibili.com/{{ fan.fan_id }}" target="_blank">
+                <img src="/proxy-image?url={{ fan.bili_face }}" alt="{{ fan.name }}" style="width: 50px; height: 50px; border-radius: 50%;">
+                {{ fan.name }}（{{ fan.bili_name }}）
+            </a>
+            {% endfor %}
+        </p>
+        <p>{{ story.content }}</p>
+    </div>
+</body>
+</html>

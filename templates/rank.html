@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>圣人排行榜</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 复用现有的样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('/static/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #333;
+        }
+        .navbar {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: #888;
+            text-decoration: none;
+            font-size: 18px;
+            margin: 0 25px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar a:hover {
+            background-color: rgba(108, 122, 224, 0.1);
+            color: #6c7ae0;
+        }
+        .intro {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px 0;
+            text-align: center;  /* 内容居中 */
+        }
+        .intro h2 {
+            font-size: 24px;
+            margin-top: 0;
+            color: #6c7ae0;
+        }
+        .intro p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .rank-images {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;  /* 图片之间的间距 */
+            margin-bottom: 20px;  /* 图片和说明之间的间距 */
+        }
+        .rank-images img {
+            max-width: 100%;  /* 图片最大宽度为容器宽度 */
+            height: auto;  /* 高度自适应 */
+        }
+        .rank-list {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        .rank-item {
+            margin-bottom: 10px;  /* 缩小间距 */
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;  /* 名字和圣人点数分布在两端 */
+        }
+        .rank-item img {
+            border-radius: 50%;
+            margin-right: 20px;
+        }
+        .rank-item h2 {
+            margin: 0;
+            font-size: 20px;
+            flex: 1;  /* 名字占据剩余空间 */
+        }
+        .rank-item p {
+            margin: 0;
+            font-size: 16px;
+            color: #666;
+        }
+        /* 前三名样式 */
+        .rank-item.top-three {
+            margin: 15px 0;  /* 增加间距 */
+        }
+        .rank-item.top-three img {
+            width: 60px;  /* 放大头像 */
+            height: 60px;
+        }
+        .rank-item.top-three h2 {
+            font-size: 24px;  /* 放大名字字体 */
+        }
+        .rank-item.top-three p {
+            font-size: 18px;  /* 放大学分数字体 */
+        }
+        /* 后面的条目样式 */
+        .rank-item.others {
+            padding-left: 80px;  /* 与头像对齐 */
+        }
+        .rank-item.others h2 {
+            font-size: 18px;  /* 缩小名字字体 */
+        }
+        .rank-item.others p {
+            font-size: 14px;  /* 缩小学分数字体 */
+        }
+        /* 确保图片和文字在同一行 */
+        .fan-link {
+            display: flex;
+            align-items: center;  /* 垂直居中 */
+            text-decoration: none;  /* 去掉下划线 */
+            color: inherit;  /* 继承父元素颜色 */
+        }
+        .fan-avatar {
+            margin-right: 10px;  /* 图片和文字之间的间距 */
+        }
+        .fan-name {
+            margin: 0;  /* 去掉默认的 margin */
+        }
+        .fan-points {
+            margin: 0;  /* 去掉默认的 margin */
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="https://live.bilibili.com/1825831614">直播间</a>
+        <a href="/">歌单</a>
+        <a href="/history">垂名青史</a>
+        <a href="/rank">圣人排行榜</a>
+    </div>
+
+    <!-- 说明块 -->
+    <div class="intro">
+        <!-- 图片块 -->
+        <div class="rank-images">
+            <img src="/static/ranktitle.png" alt="排行榜标题">
+            <img src="/static/rankform.png" alt="排行榜表单">
+        </div>
+        <h2>圣人排行榜说明</h2>
+        <p>
+            这里是圣人排行榜，展示了所有粉丝的故事<del>（黑历史）</del>情况。<br/>
+            排行榜根据粉丝的“圣人点数”进行排序，点数越高，排名越高。<br/>
+            感谢每一位粉丝的支持和贡献！
+        </p>
+    </div>
+
+    <!-- 排行榜块 -->
+    <div class="rank-list">
+        {% for fan in fans_rank %}
+        <div class="rank-item {% if fan.rank <= 3 %}top-three{% else %}others{% endif %}">
+            <a href="https://space.bilibili.com/{{ fan.fan_id }}" target="_blank" class="fan-link">
+                {% if fan.rank <= 3 %}
+                <img src="/proxy-image?url={{ fan.bili_face }}" alt="{{ fan.bili_name }}" class="fan-avatar">
+                {% endif %}
+                <h2 class="fan-name">{{ fan.name }}（{{ fan.bili_name }}）</h2>
+            </a>
+            <p class="fan-points">圣人点数：{{ fan.saint_points }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

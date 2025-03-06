@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>翻唱歌手主页</title>
+    <title>卿卿竹Sokach-歌单</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> <!-- FontAwesome 图标 -->
     <style>
         body {
@@ -109,44 +109,112 @@
             outline: none;
             border-color: #aaa;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 20px;
-        }
-        th, td {
-            padding: 15px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #6c7ae0; /* 浅蓝色表头 */
+        .filter-bar button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #6c7ae0;
             color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .filter-bar button:hover {
+            background-color: #5a68c7;
+        }
+        .category {
+            margin-bottom: 30px;
+        }
+        .category h3 {
+            font-size: 20px;
+            color: #6c7ae0; /* 浅蓝色标题 */
+            margin-bottom: 15px;
+        }
+        .song-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* 每行 4-6 个卡片 */
+            gap: 15px; /* 卡片之间的间距 */
+        }
+        .song-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .song-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .song-card h4 {
             font-size: 18px;
+            margin: 0 0 10px;
+            color: #333;
         }
-        tr {
-            cursor: pointer; /* 鼠标悬停时显示手型 */
+        .song-card p {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #666;
         }
-        tr:hover {
-            background-color: rgba(241, 241, 241, 0.7); /* 行悬停效果 */
-        }
-        a {
+        .song-card a {
             color: #6c7ae0; /* 浅蓝色链接 */
             text-decoration: none;
             font-weight: bold;
         }
-        a:hover {
+        .song-card a:hover {
             text-decoration: underline;
+        }
+        /* 列表布局样式 */
+        .song-list-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .song-list-table th, .song-list-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .song-list-table th {
+            background-color: #6c7ae0; /* 浅蓝色表头 */
+            color: white;
+            font-size: 18px;
+        }
+        .song-list-table tr {
+            cursor: pointer; /* 鼠标悬停时显示手型 */
+        }
+        .song-list-table tr:hover {
+            background-color: rgba(241, 241, 241, 0.7); /* 行悬停效果 */
+        }
+        .song-list-table a {
+            color: #6c7ae0; /* 浅蓝色链接 */
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .song-list-table a:hover {
+            text-decoration: underline;
+        }
+        /* 隐藏卡片布局 */
+        .song-list.hide-cards .song-grid {
+            display: none;
+        }
+        /* 隐藏列表布局 */
+        .song-list.hide-table .song-list-table {
+            display: none;
+        }
+        /* 隐藏分类标题 */
+        .song-list.hide-cards .category {
+            display: none;
         }
     </style>
 </head>
 <body>
     <!-- 导航栏 -->
     <div class="navbar">
-        <a href="#live">直播间</a>
-        <a href="#playlist">歌单</a>
-        <a href="#history">垂名青史</a>
-        <a href="#rank">圣人排行榜</a>
+        <a href="https://live.bilibili.com/1825831614">直播间</a>
+        <a href="/">歌单</a>
+        <a href="/history">垂名青史</a>
+        <a href="/rank">圣人排行榜</a>
     </div>
 
     <!-- 歌手介绍 -->
@@ -162,7 +230,7 @@
     </div>
 
     <!-- 歌曲列表 -->
-    <div class="song-list">
+    <div class="song-list hide-table">
         <div class="filter-bar">
             <input type="text" id="filter-name" placeholder="搜索歌名">
             <input type="text" id="filter-artist" placeholder="搜索歌手">
@@ -178,8 +246,32 @@
                 <option value="{{ genre }}">{{ genre }}</option>
                 {% endfor %}
             </select>
+            <button id="toggle-layout">切换为列表布局</button>
         </div>
-        <table>
+
+        <!-- 卡片布局 -->
+        {% for lang in languages %}
+        <div class="category">
+            <h3>{{ lang }} 歌曲</h3>
+            <div class="song-grid">
+                {% for song in songs %}
+                {% if song.language == lang %}
+                <div class="song-card" data-song-name="{{ song.name }}">
+                    <h4>{{ song.name }}</h4>
+                    <p>歌手：{{ song.artist }}</p>
+                    <p>风格：{{ song.genre }}</p>
+                    {% if song.url != '-' %}
+                    <a href="{{ song.url }}" target="_blank"><i class="fas fa-play"></i> 播放</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- 列表布局 -->
+        <table class="song-list-table">
             <thead>
                 <tr>
                     <th>歌名</th>
@@ -189,7 +281,7 @@
                     <th>操作</th>
                 </tr>
             </thead>
-            <tbody id="songs">
+            <tbody>
                 {% for song in songs %}
                 <tr data-song-name="{{ song.name }}">
                     <td>{{ song.name }}</td>
@@ -210,8 +302,7 @@
     <script>
         // 复制歌名
         function copySongName(event) {
-            const row = event.currentTarget;
-            const songName = row.getAttribute('data-song-name'); // 获取歌名
+            const songName = event.currentTarget.getAttribute('data-song-name'); // 获取歌名
 
             // 复制到剪贴板
             navigator.clipboard.writeText(songName)
@@ -224,8 +315,8 @@
         }
 
         // 绑定点击事件
-        document.querySelectorAll('#songs tr').forEach(row => {
-            row.addEventListener('click', copySongName);
+        document.querySelectorAll('.song-card, .song-list-table tr').forEach(element => {
+            element.addEventListener('click', copySongName);
         });
 
         // 过滤歌曲
@@ -235,7 +326,26 @@
             const languageFilter = document.getElementById('filter-language').value.toLowerCase();
             const genreFilter = document.getElementById('filter-genre').value.toLowerCase();
 
-            const rows = document.querySelectorAll('#songs tr');
+            // 过滤卡片布局
+            const cards = document.querySelectorAll('.song-card');
+            cards.forEach(card => {
+                const name = card.querySelector('h4').textContent.toLowerCase();
+                const artist = card.querySelector('p:nth-of-type(1)').textContent.toLowerCase();
+                const genre = card.querySelector('p:nth-of-type(2)').textContent.toLowerCase();
+                const language = card.closest('.category').querySelector('h3').textContent.replace(' 歌曲', '').toLowerCase();
+
+                if (name.includes(nameFilter) &&
+                    artist.includes(artistFilter) &&
+                    (languageFilter === '' || language === languageFilter) &&
+                    (genreFilter === '' || genre.includes(genreFilter))) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // 过滤列表布局
+            const rows = document.querySelectorAll('.song-list-table tr');
             rows.forEach(row => {
                 const name = row.cells[0].textContent.toLowerCase();
                 const artist = row.cells[1].textContent.toLowerCase();
@@ -258,6 +368,24 @@
         document.getElementById('filter-artist').addEventListener('input', filterSongs);
         document.getElementById('filter-language').addEventListener('change', filterSongs);
         document.getElementById('filter-genre').addEventListener('change', filterSongs);
+
+        // 切换布局
+        document.getElementById('toggle-layout').addEventListener('click', () => {
+            const songList = document.querySelector('.song-list');
+            const toggleButton = document.getElementById('toggle-layout');
+
+            if (songList.classList.contains('hide-cards')) {
+                // 切换到卡片布局
+                songList.classList.remove('hide-cards');
+                songList.classList.add('hide-table');
+                toggleButton.textContent = '切换为列表布局';
+            } else {
+                // 切换到列表布局
+                songList.classList.remove('hide-table');
+                songList.classList.add('hide-cards');
+                toggleButton.textContent = '切换为卡片布局';
+            }
+        });
     </script>
 </body>
 </html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卿卿竹Sokach-垂名青史</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 复用歌曲页面的样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('/static/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            color: #333;
+        }
+        .navbar {
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar a {
+            color: #888;
+            text-decoration: none;
+            font-size: 18px;
+            margin: 0 25px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .navbar a:hover {
+            background-color: rgba(108, 122, 224, 0.1);
+            color: #6c7ae0;
+        }
+        .intro {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px 0;
+        }
+        .intro h2 {
+            font-size: 24px;
+            margin-top: 0;
+            color: #6c7ae0;
+        }
+        .intro p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin: 10px 0;
+        }
+        .story-list {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        .story-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        .story-item h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .story-item p {
+            margin: 10px 0 0;
+            font-size: 16px;
+            color: #666;
+        }
+        .story-item a {
+            color: #6c7ae0;
+            text-decoration: none;
+        }
+        .story-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <a href="https://live.bilibili.com/1825831614">直播间</a>
+        <a href="/">歌单</a>
+        <a href="/history">垂名青史</a>
+        <a href="/rank">圣人排行榜</a>
+    </div>
+
+    <!-- 说明栏 -->
+    <div class="intro">
+        <h2>垂名青史说明</h2>
+        <p>
+            欢迎来到垂名青史！这里记录了粉丝们的精彩♂故事和贡献。<br/>
+            如果你也想加入垂名青史，请按照以下步骤操作：
+        </p>
+        <ol>
+            <li>联系<a href="https://space.bilibili.com/2473359" target="_blank">至尊无上的星海</a>，提供你的故事标题、人物和内容。</li>
+            <li>这个逼审核通过后，你的（通常不是你的）无敌爆炸精彩♂的故事将被添加到垂名青史列表中。</li>
+            <li>所有故事发布后，<del>都会成为圣人点数，记录在案</del>，详情请看<a href="rank">圣人排行榜</a>。</li>
+        </ol>
+        <p>
+            注意事项：
+            <ul>
+                <li>故事内容必须真实、积极向上。</li>
+                <li>禁止发布任何不当或违规内容。</li>
+                <li>星海这个逼有权对故事进行编辑或删除。</li>
+            </ul>
+        </p>
+    </div>
+
+    <!-- 故事列表 -->
+    <div class="story-list">
+        {% for story in stories %}
+        <div class="story-item">
+            <h2><a href="/history/{{ story.story_id }}">{{ story.title }}</a></h2>
+            <p>圣人：
+                {% for fan in story.fans %}
+                <a href="https://space.bilibili.com/{{ fan.fan_id }}" target="_blank">
+                    <img src="/proxy-image?url={{ fan.bili_face }}" alt="{{ fan.name }}" style="width: 50px; height: 50px; border-radius: 50%;">
+                    {{ fan.name }}（{{ fan.bili_name }}）
+                </a>
+                {% endfor %}
+            </p>
+            <p>{{ story.content[:100] }}...</p>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>

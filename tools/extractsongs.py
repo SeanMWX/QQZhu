@@ -1,7 +1,10 @@
 import pandas as pd
 
 # 读取 Excel 文件
-df = pd.read_excel('songs.xlsx')
+df = pd.read_excel('input.xlsx', sheet_name='歌单')
+
+# 打印所有列名
+print(df.columns)
 
 # 初始化 SQL 语句
 sql_insert = "INSERT INTO songs (name, artist, language, genre, url) VALUES\n"
@@ -25,7 +28,7 @@ for index, row in df.iterrows():
 sql_insert = sql_insert.rstrip(",\n") + ";"
 
 # 将 SQL 语句写入 output.txt 文件
-with open('output.txt', 'w', encoding='utf-8') as file:
+with open('output_songs.txt', 'w', encoding='utf-8') as file:
     file.write(sql_insert)
 
-print("SQL 语句已成功写入 output.txt 文件！")
+print("SQL 语句已成功写入 output_songs.txt 文件！")
