@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>卿卿竹Sokach-垂名青史</title>
+    <title>垂名青史</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         /* 复用歌曲页面的样式 */
@@ -141,7 +141,7 @@
                 </a>
                 {% endfor %}
             </p>
-            <p>{{ story.content[:100] }}...</p>
+            <p>{{ story.content[:100] | safe }}...</p>  <!-- 直接使用处理后的内容 -->
         </div>
         {% endfor %}
     </div>

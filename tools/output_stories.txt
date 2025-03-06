@@ -1,8 +1,52 @@
+DROP TABLE IF EXISTS story_fans;
+DROP TABLE IF EXISTS stories;
+
+-- 创建 stories 表
+CREATE TABLE stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL
+);
+
+-- 创建 story_fans 表（关联表）
+CREATE TABLE story_fans (
+    story_id INT,
+    fan_id BIGINT,
+    PRIMARY KEY (story_id, fan_id),  -- 联合主键
+    FOREIGN KEY (story_id) REFERENCES stories(id),
+    FOREIGN KEY (fan_id) REFERENCES fans(id)
+);
+
 INSERT INTO stories (title, content) VALUES
 ('向邪恶掏出追追！', '据可靠小道消息，黄豆豆学生时代，曾是至高无上的追追皇帝，一旦见到有违法犯罪行为方式，将会掏出追追进行狠狠地制裁！'),
-('鱼丸比星海小', '这一点已经是江湖上人人皆知的事情，而且也是鱼丸老板自己亲口承认的事情。'),
+('鱼丸比星海小', '这一点已经是江湖上人人皆知的事情，而且也是鱼丸老板自己亲口承认的事情。不信请看<br/>
+<img src="https://i.ibb.co/d4B3tXqc/Weixin-Image-20250306075256.png" alt="Weixin-Image-20250306075256" border="0">。'),
 ('斗地主三兄弟', '传说在2025年蛇年新年期间的某天晚上，斗地主世界曾经出现过三个人的身影，他们战无不胜，宛如天神下凡版，统治世界！'),
-('上厕所用什么纸？', '我不说是谁，但是曾经有一个人说过，如果你上厕所要用纸，那将是对生态环境造成极大的浪费。因为，那天的事情是这样的，有一个熊mer，她上厕所没带纸，但是，家里又只有奶奶在房间，怎么办呢，这个时候的她，有一个大胆的想法，好像其实不擦屎出门，也没有关系，于是乎她提起裤子，就走出了厕所，在之后的事情... 没有人知道了。');
+('上厕所用什么纸？', '我不说是谁，但是曾经有一个人说过，如果你上厕所要用纸，那将是对生态环境造成极大的浪费。因为，那天的事情是这样的，有一个熊mer，她上厕所没带纸，但是，家里又只有奶奶在房间，怎么办呢，这个时候的她，有一个大胆的想法，好像其实不擦屎出门，也没有关系，于是乎她提起裤子，就走出了厕所，在之后的事情... 没有人知道了。'),
+('好的主子，你美爆了。', '直到今天，我们都不知道鱼丸老板，私底下究竟做过什么py交易。<br>
+<img src="https://i.ibb.co/9Hj8vwQY/Weixin-Image-20250306080107.png" alt="Weixin-Image-20250306080107" border="0">
+<img src="https://i.ibb.co/93ZV5MDd/Weixin-Image-20250306080105.png" alt="Weixin-Image-20250306080105" border="0">
+<img src="https://i.ibb.co/5X13x2cQ/Weixin-Image-20250306080103.png" alt="Weixin-Image-20250306080103" border="0">
+<img src="https://i.ibb.co/fd6THrYf/Weixin-Image-20250306080059.png" alt="Weixin-Image-20250306080059" border="0">'),
+('鱼丸汉堡守护之战！', '第一局周周小胜一手，
+<img src="https://i.ibb.co/bhR2N4g/Weixin-Image-20250306081339.png" alt="Weixin-Image-20250306081339" border="0">。<br/>
+第二局我勒个豆，汉堡改改和鱼丸老板，把周周摁在土里面了。但是原谅我，并没有找到图片。<br/>'),
+('熊猫的涩图大师', '话不多说，熊猫的涩图99%都来自于这位大师之手。'),
+('五子棋国手', '2025年2月2日的早上，那是一个让世人难忘的早晨，星海与哇塞，激战了一个早上也难分胜负，最后各自获得了五子棋国手的称号！'),
+('超级变化形态！', '重剑，超级变化形态！<br/>
+<img src="https://i.ibb.co/4n84ZLYr/Weixin-Image-20250306095641.png" alt="Weixin-Image-20250306095641" border="0">'),
+('我感觉不用管她死活', '来自于一个运营简经纪人的无敌言论，“我感觉不用管她死活”。<br/>
+<img src="https://i.ibb.co/p6hs84QX/Weixin-Image-20250306100015.png" alt="Weixin-Image-20250306100015" border="0">'),
+('群里要谨言慎行！', '由于群内黄色程度过高，阿雷直接进行一个急停！<br/>
+<img src="https://i.ibb.co/d4mchM4T/Weixin-Image-20250306100516.png" alt="Weixin-Image-20250306100516" border="0">'),
+('他是0', '虽然不了解，但是大受震撼。<br/>
+<img src="https://i.ibb.co/XfJCTfBC/Weixin-Image-20250306100800.png" alt="Weixin-Image-20250306100800" border="0">'),
+('DON’T PUSH', '什么也不说了，DON’T PUSH。历经4小时的终极大战。<br/>
+<img src="https://i.ibb.co/jPwRxLhK/Weixin-Image-20250306105224.png" alt="Weixin-Image-20250306105224" border="0">'),
+('别来沾边！', '她真的很恐怖！<br/>
+<img src="https://i.ibb.co/KzmWQR8X/Weixin-Image-20250306105418.png" alt="Weixin-Image-20250306105418" border="0">'),
+('东莞的秘书', '星海说过一句骇人听闻的话，“东莞的秘书我真的都玩穿了”。很恐怖，很恐怖好吧！<br/>
+<img src="https://i.ibb.co/nGDRYfJ/Weixin-Image-20250306105806.png" alt="Weixin-Image-20250306105806" border="0">');
 
 INSERT INTO story_fans (story_id, fan_id) VALUES
 (1, 3546637586664005),
@@ -10,4 +54,21 @@ INSERT INTO story_fans (story_id, fan_id) VALUES
 (3, 2473359),
 (3, 3546697030437325),
 (3, 76716997),
-(4, 3546697030437325);
+(4, 3546697030437325),
+(5, 507754474),
+(6, 507754474),
+(6, 512639746),
+(7, 214009449),
+(8, 10977173),
+(9, 15293125),
+(10, 507754474),
+(11, 21743321),
+(12, 243961884),
+(13, 507754474),
+(13, 2473359),
+(13, 3546697030437325),
+(13, 12170858),
+(13, 243961884),
+(13, 21743321),
+(14, 3546697030437325),
+(15, 2473359);

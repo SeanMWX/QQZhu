@@ -6,6 +6,7 @@ import aiomysql
 import asyncio
 import json
 import aiohttp
+import re
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
     def optionxform(self, optionstr):
@@ -100,6 +101,9 @@ async def fetch_stories(pool):
                     story['fans'] = fans
                 else:
                     story['fans'] = []
+
+                # 替换 <img> 标签为 [图片]
+                story['content'] = re.sub(r'<img[^>]*>', '[图片]', story['content'])
     return stories
 
 async def fetch_fans_rank(pool):

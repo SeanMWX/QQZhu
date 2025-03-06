@@ -1,3 +1,16 @@
+DROP TABLE IF EXISTS songs;
+
+-- 创建 songs 表
+CREATE TABLE songs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,  -- 歌名
+    artist VARCHAR(255) NOT NULL,  -- 歌手
+    language VARCHAR(50),  -- 语言
+    genre VARCHAR(50),  -- 风格
+    url VARCHAR(255) NOT NULL  -- 歌曲的URL
+);
+
+
 INSERT INTO songs (name, artist, language, genre, url) VALUES
 ('痒', '黄龄', '国语', '流行', '-'),
 ('问', '梁静茹', '国语', '流行', '-'),
@@ -352,4 +365,23 @@ INSERT INTO songs (name, artist, language, genre, url) VALUES
 ('霜雪千年', '封茗囧菌', '国语', '古风', 'https://www.bilibili.com/video/BV1S32hYfE8Z'),
 ('免我蹉跎苦', '黄龄', '国语', '古风', 'https://www.bilibili.com/video/BV15D2cYDEwM'),
 ('白马照青衣', '绯村柯北', '国语', '古风', 'https://www.bilibili.com/video/BV1qZHDeQESS'),
-('你把我灌醉', '邓紫棋', '国语', '流行', 'https://www.bilibili.com/video/BV1JKWLetEAy');
+('你把我灌醉', '邓紫棋', '国语', '流行', 'https://www.bilibili.com/video/BV1JKWLetEAy'),
+('回音', '余又', '国语', '流行', '-'),
+('送你一朵小红花', '赵英俊', '国语', '流行', '-'),
+('人间乐', '宋佳、蔡忻如、杜鑫艳', '国语', '古风', '-'),
+('坠落', '兰音Reine', '国语', '流行', '-'),
+('参商', '不才', '国语', '流行', '-'),
+('窃窃', '兰音Reine', '国语', '流行', '-'),
+('等不来花开', 'pro', '国语', '流行', '-'),
+('再见深海', '唐汉霄', '国语', '流行', '-'),
+('人间不值得', '黄诗扶', '国语', '流行', '-'),
+('晴天和猫', '花粥', '国语', '民谣', '-'),
+('山河诗旧', '边靖婷', '国语', '古风', '-'),
+('逍遥仙', '伊格赛听', '国语', '古风', '-'),
+('易安难安', '赤羽', '国语', '古风', '-'),
+('纯妹妹', '单依纯', '国语', '流行', '-'),
+('招娣', '周林枫', '国语', '流行', '-'),
+('阿嬷', '周林枫', '国语', '流行', '-'),
+('只为碎银几两', '周林枫', '国语', '古风', '-'),
+('此去半生', '周林枫', '国语', '古风', '-'),
+('寄明月', 'SING女团', '国语', '古风', '-');

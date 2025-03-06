@@ -7,6 +7,22 @@ df = pd.read_excel('input.xlsx', sheet_name='垂名青史')  # 索引从 0 开�
 print(df.columns)
 
 # 初始化 SQL 语句
+sql_drop = "DROP TABLE IF EXISTS story_fans;\nDROP TABLE IF EXISTS stories;"
+sql_create = """-- 创建 stories 表
+CREATE TABLE stories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL
+);
+
+-- 创建 story_fans 表（关联表）
+CREATE TABLE story_fans (
+    story_id INT,
+    fan_id BIGINT,
+    PRIMARY KEY (story_id, fan_id),  -- 联合主键
+    FOREIGN KEY (story_id) REFERENCES stories(id),
+    FOREIGN KEY (fan_id) REFERENCES fans(id)
+);"""
 sql_stories = "INSERT INTO stories (title, content) VALUES\n"
 sql_story_fans = "INSERT INTO story_fans (story_id, fan_id) VALUES\n"
 
@@ -41,6 +57,6 @@ sql_story_fans = sql_story_fans.rstrip(",\n") + ";"
 
 # 将 SQL 语句写入 output_stories.txt 文件
 with open('output_stories.txt', 'w', encoding='utf-8') as file:
-    file.write(sql_stories + "\n\n" + sql_story_fans)
+    file.write(sql_drop + "\n\n" + sql_create + "\n\n" + sql_stories + "\n\n" + sql_story_fans)
 
 print("SQL 语句已成功写入 output_stories.txt 文件！")

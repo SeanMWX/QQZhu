@@ -85,7 +85,7 @@
             </a>
             {% endfor %}
         </p>
-        <p>{{ story.content }}</p>
+        <p>{{ story.content | safe }}</p>  <!-- 使用 safe 过滤器 -->
     </div>
 </body>
 </html>
