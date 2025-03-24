@@ -366,7 +366,7 @@ INSERT INTO songs (name, artist, language, genre, url) VALUES
 ('免我蹉跎苦', '黄龄', '国语', '古风', 'https://www.bilibili.com/video/BV15D2cYDEwM'),
 ('白马照青衣', '绯村柯北', '国语', '古风', 'https://www.bilibili.com/video/BV1qZHDeQESS'),
 ('你把我灌醉', '邓紫棋', '国语', '流行', 'https://www.bilibili.com/video/BV1JKWLetEAy'),
-('回音', '余又', '国语', '流行', '-'),
+('回音', '余又', '国语', '流行', 'https://www.bilibili.com/video/BV16UQBYLE4z'),
 ('送你一朵小红花', '赵英俊', '国语', '流行', '-'),
 ('人间乐', '宋佳、蔡忻如、杜鑫艳', '国语', '古风', '-'),
 ('坠落', '兰音Reine', '国语', '流行', '-'),
