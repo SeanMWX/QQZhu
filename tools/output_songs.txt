@@ -440,4 +440,6 @@ INSERT INTO songs (name, artist, language, genre, url) VALUES
 ('米奇go', '未知歌手', '国语', '流行', '-'),
 ('难却', '平生不晚', '国语', '古风', 'https://www.bilibili.com/video/BV1rcLbzuEyR'),
 ('土坡上的狗尾草', '卢润泽', '国语', '流行', '-'),
-('璀璨冒险人', '周深', '国语', '流行', 'https://www.bilibili.com/video/BV1JnGTzKEUf');
+('璀璨冒险人', '周深', '国语', '流行', 'https://www.bilibili.com/video/BV1JnGTzKEUf'),
+('爱情专属权', '龙梅子、老猫', '国语', '流行', 'https://www.bilibili.com/video/BV1Pr8czuE2i'),
+('听说你', '于冬然', '国语', '流行', 'https://www.bilibili.com/video/BV1jZ8cztEpY');
