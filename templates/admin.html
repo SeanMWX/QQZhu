@@ -312,6 +312,17 @@
                 <strong>XLSX：</strong>首行表头必须依次为：歌名 | 歌手 | 语言 | 风格 | url；第二行开始为数据，缺失可留空，url 为空时用 “-” 代替。
             </div>
         </div>
+
+        <div class="panel">
+            <h2>安全</h2>
+            <form method="post" action="/admin/action" class="backup-box" onsubmit="return confirm('确定修改 admin_token 吗？修改后需重新登录');">
+                <input type="hidden" name="action" value="update_admin_token">
+                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+                <div style="flex:1; min-width:240px;">修改后台 admin_token（将写入 config.ini）。</div>
+                <input type="text" name="new_token" placeholder="新 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;">
+                <button type="submit" style="background:#e74c3c;"><i class="fa fa-key"></i> 更新</button>
+            </form>
+        </div>
     </div>
     <script>
         const backupInput = document.getElementById('backup-file-input');

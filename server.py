@@ -431,6 +431,17 @@ async def admin_action(request):
                     new_settings["singer_url"] = saved
             await update_settings(conn, new_settings)
             message = "站点信息已更新"
+        elif action == "update_admin_token":
+            new_token = form.get("new_token", "").strip()
+            if not new_token:
+                raise ValueError("新 token 不能为空")
+            cfg = request.app["config"].config
+            cfg.set("server", "admin_token", new_token)
+            with open("config.ini", "w", encoding="utf-8") as f:
+                cfg.write(f)
+            message = "admin_token 已更新，请重新登录"
+            if wants_json(request):
+                return web.json_response({"ok": True, "action": "update_admin_token", "message": message})
         else:
             message = "未知操作"
     except Exception as exc:
