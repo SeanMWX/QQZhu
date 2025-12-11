@@ -56,14 +56,18 @@
             max-width: 1200px;
             margin: 20px 0;
             text-align: left;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
         }
         .intro img {
             width: 150px;
             height: 150px;
             border-radius: 50%;
-            float: left;
-            margin-right: 20px;
+            object-fit: cover;
+            flex-shrink: 0;
         }
+        .intro .intro-text { flex: 1; }
         .intro h2 {
             font-size: 24px;
             margin-top: 0;
@@ -78,6 +82,15 @@
         .intro p {
             font-size: 16px;
             line-height: 1.6;
+            margin: 10px 0 0;
+        }
+        @media (max-width: 640px) {
+            .intro {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .intro .intro-text { width: 100%; }
         }
         .song-list {
             background-color: rgba(255, 255, 255, 0.9); /* 歌曲列表背景 */
@@ -218,9 +231,13 @@
 
     <!-- 歌手介绍 -->
     <div class="intro">
-        <img src="{{ settings.singer_url }}" alt="歌手图片">
-        <h2><a href="{{ settings.live_url }}" target="_blank">{{ settings.singer_name }}</a></h2>
-        <p>{{ settings.singer_intro.replace('\n','<br/>') | safe }}</p>
+        <div class="intro-media">
+            <img src="{{ settings.singer_url }}" alt="歌手图片">
+        </div>
+        <div class="intro-text">
+            <h2><a href="{{ settings.live_url }}" target="_blank">{{ settings.singer_name }}</a></h2>
+            <p>{{ settings.singer_intro.replace('\n','<br/>') | safe }}</p>
+        </div>
     </div>
 
     <!-- 歌曲列表 -->

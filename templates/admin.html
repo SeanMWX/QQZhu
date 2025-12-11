@@ -157,14 +157,11 @@
                 <label for="live_url">直播间地址</label>
                 <input type="text" id="live_url" name="live_url" value="{{ settings.live_url }}" required>
 
-                <label for="background_url">背景图地址</label>
-                <input type="text" id="background_url" name="background_url" value="{{ settings.background_url }}" required>
-                <p class="tips">可填本地路径（如 /static/background.jpg）或网络图。</p>
+                <p class="tips">当前背景图：{{ settings.background_url }}</p>
                 <label>上传背景图（可选）</label>
                 <input type="file" name="background_file" accept="image/*">
 
-                <label for="singer_url">歌手头像地址</label>
-                <input type="text" id="singer_url" name="singer_url" value="{{ settings.singer_url }}" required>
+                <p class="tips">当前歌手头像：{{ settings.singer_url }}</p>
                 <label>上传歌手头像（可选）</label>
                 <input type="file" name="singer_file" accept="image/*">
 

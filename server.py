@@ -290,15 +290,16 @@ async def admin_action(request):
             saved = await backup_songs(conn, dest)
             message = f"备份已生成: {saved}"
         elif action == "settings":
+            current_settings = await get_settings(conn)
             bg_file = form.get("background_file")
             singer_file = form.get("singer_file")
             new_settings = {
-                "title": form.get("title", "").strip() or DEFAULT_SETTINGS["title"],
-                "live_url": form.get("live_url", "").strip() or DEFAULT_SETTINGS["live_url"],
-                "background_url": form.get("background_url", "").strip() or DEFAULT_SETTINGS["background_url"],
-                "singer_url": form.get("singer_url", "").strip() or DEFAULT_SETTINGS["singer_url"],
-                "singer_name": form.get("singer_name", "").strip() or DEFAULT_SETTINGS["singer_name"],
-                "singer_intro": form.get("singer_intro", "").strip() or DEFAULT_SETTINGS["singer_intro"],
+                "title": form.get("title", "").strip() or current_settings.get("title", DEFAULT_SETTINGS["title"]),
+                "live_url": form.get("live_url", "").strip() or current_settings.get("live_url", DEFAULT_SETTINGS["live_url"]),
+                "singer_name": form.get("singer_name", "").strip() or current_settings.get("singer_name", DEFAULT_SETTINGS["singer_name"]),
+                "singer_intro": form.get("singer_intro", "").strip() or current_settings.get("singer_intro", DEFAULT_SETTINGS["singer_intro"]),
+                "background_url": current_settings.get("background_url", DEFAULT_SETTINGS["background_url"]),
+                "singer_url": current_settings.get("singer_url", DEFAULT_SETTINGS["singer_url"]),
             }
             if hasattr(bg_file, "file") and bg_file.filename:
                 saved = save_file_field(bg_file, "bg")
@@ -320,7 +321,7 @@ async def admin_action(request):
 
 
 async def init_app():
-    app = web.Application()
+    app = web.Application(client_max_size=10 * 1024 * 1024)
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("templates"))
 
     app.router.add_static("/static/", path="static", name="static")
