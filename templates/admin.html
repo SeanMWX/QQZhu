@@ -138,15 +138,27 @@
             background-color: #f0f2ff;
             color: #3748a0;
             border: 1px solid #d0d6f5;
-            padding: 8px 12px;
+            padding: 10px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 13px;
             display: inline-flex;
             align-items: center;
             gap: 6px;
+            min-width: 140px;
+            justify-content: center;
+            height: 20px;
+            line-height: 20px;
+            white-space: nowrap;
         }
         .file-input .btn:hover { background-color: #e4e8ff; }
+        .file-input .btn #file-label {
+            max-width: 140px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            display: inline-block;
+        }
         .file-input .filename {
             margin-left: 8px;
             font-size: 13px;
