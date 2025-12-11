@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>设置后台 Token</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .card {
+            background: #fff;
+            padding: 28px;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            width: 360px;
+        }
+        h2 { margin-top: 0; }
+        .field { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; color: #333; }
+        input[type="password"], input[type="text"] {
+            width: 100%; padding: 10px; border: 1px solid #dcdfe6; border-radius: 6px;
+        }
+        .btn {
+            width: 100%; padding: 10px; border: none; border-radius: 6px;
+            background: #4b7bec; color: #fff; font-size: 16px; cursor: pointer;
+        }
+        .btn:hover { background: #3d6bd3; }
+        .msg { color: #d9534f; margin-bottom: 12px; min-height: 18px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>首次设置后台 Token</h2>
+        <p>当前未配置后台口令，请先设置。请妥善保存。</p>
+        <div class="msg">{{ message }}</div>
+        <form action="/admin/setup" method="post">
+            <input type="hidden" name="next" value="{{ next }}">
+            <div class="field">
+                <label for="new_token">新的 Token</label>
+                <input id="new_token" name="new_token" type="password" required placeholder="请输入新的后台口令">
+            </div>
+            <button class="btn" type="submit">保存并进入后台</button>
+        </form>
+    </div>
+</body>
+</html>

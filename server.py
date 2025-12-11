@@ -283,7 +283,8 @@ def require_admin(request, form=None):
     """Check admin token via header/query/form/cookie; redirect to login if missing."""
     token_cfg = request.app["config"].admin_token()
     if not token_cfg:
-        return None
+        next_url = quote(str(request.rel_url))
+        raise web.HTTPFound(location=f"/admin/setup?next={next_url}")
     provided = (
         request.headers.get("X-Admin-Token")
         or request.query.get("token")
@@ -324,6 +325,9 @@ async def proxy_image(request):
 
 
 async def admin_login_get(request):
+    if not request.app["config"].admin_token():
+        next_url = quote(str(request.rel_url))
+        raise web.HTTPFound(location=f"/admin/setup?next={next_url}")
     return aiohttp_jinja2.render_template(
         "admin_login.html",
         request,
@@ -332,6 +336,9 @@ async def admin_login_get(request):
 
 
 async def admin_login_post(request):
+    if not request.app["config"].admin_token():
+        next_url = quote(str(request.rel_url))
+        raise web.HTTPFound(location=f"/admin/setup?next={next_url}")
     form = await request.post()
     token_cfg = request.app["config"].admin_token()
     provided = form.get("token", "")
@@ -350,6 +357,40 @@ async def admin_login_post(request):
 async def admin_logout(request):
     resp = web.HTTPFound(location="/admin/login")
     resp.del_cookie("admin_token")
+    return resp
+
+
+async def admin_setup_get(request):
+    """First-time token setup when no admin_token is configured."""
+    if request.app["config"].admin_token():
+        raise web.HTTPFound(location="/admin/login")
+    return aiohttp_jinja2.render_template(
+        "admin_setup.html",
+        request,
+        {"next": request.query.get("next", "/admin"), "message": request.query.get("message", "")},
+    )
+
+
+async def admin_setup_post(request):
+    if request.app["config"].admin_token():
+        raise web.HTTPFound(location="/admin/login")
+    form = await request.post()
+    new_token = form.get("new_token", "").strip()
+    next_url = form.get("next") or "/admin"
+    if not new_token:
+        return aiohttp_jinja2.render_template(
+            "admin_setup.html",
+            request,
+            {"next": next_url, "message": "Token 不能为空"},
+        )
+    cfg = request.app["config"].config
+    if not cfg.has_section("server"):
+        cfg.add_section("server")
+    cfg.set("server", "admin_token", new_token)
+    with open("config.ini", "w", encoding="utf-8") as f:
+        cfg.write(f)
+    resp = web.HTTPFound(location=next_url)
+    resp.set_cookie("admin_token", new_token, httponly=True, samesite="Lax")
     return resp
 
 
@@ -502,6 +543,8 @@ async def init_app():
     app.router.add_get("/admin/login", admin_login_get)
     app.router.add_post("/admin/login", admin_login_post)
     app.router.add_get("/admin/logout", admin_logout)
+    app.router.add_get("/admin/setup", admin_setup_get)
+    app.router.add_post("/admin/setup", admin_setup_post)
     app.router.add_get("/admin", admin_page)
     app.router.add_post("/admin/action", admin_action)
 
