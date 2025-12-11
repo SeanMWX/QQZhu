@@ -44,9 +44,32 @@ class Config:
 
 
 async def create_db_connection(db_path):
+    # Ensure the database directory exists before connecting
+    db_dir = os.path.dirname(db_path)
+    if db_dir:
+        os.makedirs(db_dir, exist_ok=True)
     conn = await aiosqlite.connect(db_path)
     conn.row_factory = aiosqlite.Row
+    await ensure_tables(conn)
     return conn
+
+
+async def ensure_tables(conn):
+    """Create required tables if they do not exist."""
+    await conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS songs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            artist TEXT NOT NULL,
+            language TEXT NOT NULL,
+            genre TEXT NOT NULL,
+            url TEXT NOT NULL
+        )
+        """
+    )
+    await ensure_settings_table(conn)
+    await conn.commit()
 
 
 async def ensure_settings_table(conn):
