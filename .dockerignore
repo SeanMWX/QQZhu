@@ -1,0 +1,10 @@
+.git
+__pycache__/
+*.pyc
+instance/
+backup/
+static/uploads/
+tools/
+output.txt
+songs.xlsx
+config.ini

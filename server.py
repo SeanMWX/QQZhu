@@ -33,14 +33,22 @@ class Config:
         self.config = CaseSensitiveConfigParser()
         self.config.read(filename)
 
+    def _get(self, section, key, default):
+        if self.config.has_section(section) and key in self.config[section]:
+            return self.config[section][key]
+        return default
+
     def db_path(self):
-        return self.config["database"].get("path", "instance/qqzhu.db")
+        return os.environ.get("QQZHU_DB_PATH") or self._get("database", "path", "instance/qqzhu.db")
 
     def server_port(self):
-        return int(self.config["server"].get("port", 8080))
+        env_port = os.environ.get("QQZHU_PORT")
+        if env_port:
+            return int(env_port)
+        return int(self._get("server", "port", 8080))
 
     def admin_token(self):
-        return self.config["server"].get("admin_token", "")
+        return os.environ.get("QQZHU_ADMIN_TOKEN") or self._get("server", "admin_token", "")
 
 
 async def create_db_connection(db_path):

@@ -1,6 +1,0 @@
-[database]
-path = instance/qqzhu.db
-
-[server]
-port = 80
-admin_token = changeme
