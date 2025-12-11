@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台登录</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-image: url('/static/background.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.92);
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+            width: 90%;
+            max-width: 420px;
+        }
+        h1 {
+            margin: 0 0 12px;
+            color: #6c7ae0;
+            text-align: center;
+        }
+        label { display: block; margin: 10px 0 6px; font-weight: bold; }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            margin-top: 16px;
+            padding: 12px;
+            background: #6c7ae0;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        button:hover { background: #5763c6; }
+        .message {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #ffecec;
+            color: #c0392b;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>后台登录</h1>
+        <form method="post" action="/admin/login">
+            <input type="hidden" name="next" value="{{ next }}">
+            <label for="token">Admin Token</label>
+            <input type="text" id="token" name="token" required>
+            <button type="submit"><i class="fa fa-door-open"></i> 登录</button>
+        </form>
+        {% if message %}
+        <div class="message">{{ message }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>

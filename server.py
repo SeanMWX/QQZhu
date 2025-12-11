@@ -111,14 +111,21 @@ async def backup_songs(conn, dest_path):
     return dest_path
 
 
-def require_admin(request):
-    token = request.app["config"].admin_token()
-    if not token:
-        return True
-    provided = request.headers.get("X-Admin-Token") or request.query.get("token")
-    if provided and provided == token:
-        return True
-    raise web.HTTPUnauthorized(text="Unauthorized")
+def require_admin(request, form=None):
+    """Check admin token via header/query/form/cookie; redirect to login if missing."""
+    token_cfg = request.app["config"].admin_token()
+    if not token_cfg:
+        return None
+    provided = (
+        request.headers.get("X-Admin-Token")
+        or request.query.get("token")
+        or (form.get("token") if form else None)
+        or request.cookies.get("admin_token")
+    )
+    if provided == token_cfg:
+        return provided
+    next_url = quote(str(request.rel_url))
+    raise web.HTTPFound(location=f"/admin/login?next={next_url}")
 
 
 async def index(request):
@@ -147,8 +154,32 @@ async def proxy_image(request):
             raise web.HTTPNotFound(text="Image not found")
 
 
+async def admin_login_get(request):
+    return aiohttp_jinja2.render_template(
+        "admin_login.html",
+        request,
+        {"next": request.query.get("next", "/admin"), "message": request.query.get("message", "")},
+    )
+
+
+async def admin_login_post(request):
+    form = await request.post()
+    token_cfg = request.app["config"].admin_token()
+    provided = form.get("token", "")
+    next_url = form.get("next") or "/admin"
+    if token_cfg and provided == token_cfg:
+        resp = web.HTTPFound(location=next_url)
+        resp.set_cookie("admin_token", provided, httponly=True, samesite="Lax")
+        return resp
+    return aiohttp_jinja2.render_template(
+        "admin_login.html",
+        request,
+        {"next": next_url, "message": "Token 错误或未设置"},
+    )
+
+
 async def admin_page(request):
-    require_admin(request)
+    _ = require_admin(request)
     conn = request.app["db_conn"]
     songs = await fetch_songs(conn)
     return aiohttp_jinja2.render_template(
@@ -161,16 +192,7 @@ async def admin_page(request):
 async def admin_action(request):
     conn = request.app["db_conn"]
     form = await request.post()
-    provided_token = None
-    token_cfg = request.app["config"].admin_token()
-    if token_cfg:
-        provided_token = (
-            request.headers.get("X-Admin-Token")
-            or request.query.get("token")
-            or form.get("token")
-        )
-        if provided_token != token_cfg:
-            raise web.HTTPUnauthorized(text="Unauthorized")
+    require_admin(request, form)
     action = form.get("action")
     message = ""
     try:
@@ -204,10 +226,7 @@ async def admin_action(request):
     except Exception as exc:
         message = f"操作失败: {exc}"
 
-    params = []
-    if provided_token:
-        params.append(f"token={quote(provided_token)}")
-    params.append(f"message={quote(message)}")
+    params = [f"message={quote(message)}"]
     return web.HTTPFound(location="/admin?" + "&".join(params))
 
 
@@ -224,6 +243,8 @@ async def init_app():
     app["config"] = config
 
     app.router.add_get("/", index)
+    app.router.add_get("/admin/login", admin_login_get)
+    app.router.add_post("/admin/login", admin_login_post)
     app.router.add_get("/admin", admin_page)
     app.router.add_post("/admin/action", admin_action)
 
