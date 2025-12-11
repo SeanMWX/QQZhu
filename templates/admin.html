@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-image: url('/static/background.jpg');
+            background-image: url('{{ settings.background_url }}');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -98,9 +98,7 @@
             font-size: 14px;
             transition: background-color 0.2s ease;
         }
-        button:hover {
-            background-color: #5763c6;
-        }
+        button:hover { background-color: #5763c6; }
         .message {
             margin-bottom: 12px;
             padding: 10px 14px;
@@ -108,22 +106,10 @@
             background: #eef2ff;
             color: #3748a0;
         }
-        .song-list {
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 8px;
-            border-bottom: 1px solid #e5e5e5;
-            text-align: left;
-        }
-        .small-input {
-            width: 100%;
-            max-width: 200px;
-        }
+        .song-list { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 8px; border-bottom: 1px solid #e5e5e5; text-align: left; }
+        .small-input { width: 100%; max-width: 200px; }
         .backup-box {
             display: flex;
             align-items: center;
@@ -131,6 +117,7 @@
             gap: 12px;
             flex-wrap: wrap;
         }
+        .tips { font-size: 13px; color: #666; margin-top: 4px; }
         @media (max-width: 768px) {
             .container { padding: 16px; }
             .navbar a { margin: 0 10px; font-size: 16px; }
@@ -151,6 +138,41 @@
         {% if message %}
         <div class="message">{{ message }}</div>
         {% endif %}
+
+        <div class="panel">
+            <h2>站点信息</h2>
+            <form method="post" action="/admin/action" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="settings">
+                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+
+                <label for="title">网页标题</label>
+                <input type="text" id="title" name="title" value="{{ settings.title }}" required>
+
+                <label for="singer_name">歌手名字</label>
+                <input type="text" id="singer_name" name="singer_name" value="{{ settings.singer_name }}" required>
+
+                <label for="singer_intro">歌手介绍</label>
+                <textarea id="singer_intro" name="singer_intro" rows="3">{{ settings.singer_intro }}</textarea>
+
+                <label for="live_url">直播间地址</label>
+                <input type="text" id="live_url" name="live_url" value="{{ settings.live_url }}" required>
+
+                <label for="background_url">背景图地址</label>
+                <input type="text" id="background_url" name="background_url" value="{{ settings.background_url }}" required>
+                <p class="tips">可填本地路径（如 /static/background.jpg）或网络图。</p>
+                <label>上传背景图（可选）</label>
+                <input type="file" name="background_file" accept="image/*">
+
+                <label for="singer_url">歌手头像地址</label>
+                <input type="text" id="singer_url" name="singer_url" value="{{ settings.singer_url }}" required>
+                <label>上传歌手头像（可选）</label>
+                <input type="file" name="singer_file" accept="image/*">
+
+                <div class="actions">
+                    <button type="submit"><i class="fa fa-save"></i> 保存站点信息</button>
+                </div>
+            </form>
+        </div>
 
         <div class="panel">
             <h2>新增歌曲</h2>

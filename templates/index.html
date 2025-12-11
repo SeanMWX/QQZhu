@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>卿卿竹Sokach的歌单</title>
+    <title>{{ settings.title }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> <!-- FontAwesome 图标 -->
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-image: url('/static/background.jpg'); /* 背景图 */
+            background-image: url('{{ settings.background_url }}'); /* 背景图 */
             background-size: cover;
             background-position: center;
             background-attachment: fixed; /* 背景图固定 */
@@ -211,21 +211,16 @@
 <body>
     <!-- 导航栏 -->
     <div class="navbar">
-        <a href="https://live.bilibili.com/1825831614">直播间</a>
+        <a href="{{ settings.live_url }}">直播间</a>
         <a href="/">歌单</a>
         <a href="/admin">后台</a>
     </div>
 
     <!-- 歌手介绍 -->
     <div class="intro">
-        <img src="/static/singer.jpg" alt="歌手图片"> <!-- 歌手图片 -->
-        <h2><a href="https://space.bilibili.com/3546697030437325" target="_blank">卿卿竹Sokach</a></h2>
-        <p>
-            这里是卿卿呀 —— 一只来自四川的可爱熊猫猫🐱 <br/>
-            😊 粉丝牌首牌牌点歌喔！ 😊 告白花束点歌喔！ 😊 舰长 点歌月卡 + 学歌卡！ <br/>
-            粉丝群群：435951595。 <br/>
-            谢谢你的关注~~！
-        </p>
+        <img src="{{ settings.singer_url }}" alt="歌手图片">
+        <h2><a href="{{ settings.live_url }}" target="_blank">{{ settings.singer_name }}</a></h2>
+        <p>{{ settings.singer_intro | safe }}</p>
     </div>
 
     <!-- 歌曲列表 -->

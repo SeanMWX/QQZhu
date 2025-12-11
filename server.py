@@ -7,9 +7,18 @@ import aiohttp
 import aiosqlite
 import json
 import os
+import time
 from urllib.parse import quote
 from pypinyin import pinyin, Style
 
+DEFAULT_SETTINGS = {
+    "title": "歌单",
+    "live_url": "https://live.bilibili.com/1825831614",
+    "background_url": "/static/background.jpg",
+    "singer_url": "/static/singer.jpg",
+    "singer_name": "歌手名字",
+    "singer_intro": "这里填写歌手介绍~",
+}
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
     def optionxform(self, optionstr):
@@ -37,6 +46,37 @@ async def create_db_connection(db_path):
     conn = await aiosqlite.connect(db_path)
     conn.row_factory = aiosqlite.Row
     return conn
+
+
+async def ensure_settings_table(conn):
+    await conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS site_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+        """
+    )
+    await conn.commit()
+
+
+def ensure_upload_dir():
+    os.makedirs("static/uploads", exist_ok=True)
+
+
+def save_file_field(file_field, prefix):
+    """Save aiohttp FileField to static/uploads and return web path."""
+    ensure_upload_dir()
+    filename = file_field.filename
+    if not filename:
+        return None
+    ext = os.path.splitext(filename)[1]
+    safe_name = f"{prefix}_{int(time.time())}{ext}"
+    path_fs = os.path.join("static", "uploads", safe_name)
+    with open(path_fs, "wb") as f:
+        content = file_field.file.read()
+        f.write(content)
+    return f"/static/uploads/{safe_name}"
 
 
 async def fetch_songs(conn):
@@ -76,6 +116,27 @@ async def fetch_unique_genres(conn):
     rows = await cursor.fetchall()
     await cursor.close()
     return [row["genre"] for row in rows]
+
+
+async def get_settings(conn):
+    await ensure_settings_table(conn)
+    cursor = await conn.execute("SELECT key, value FROM site_settings")
+    rows = await cursor.fetchall()
+    await cursor.close()
+    stored = {row["key"]: row["value"] for row in rows}
+    merged = DEFAULT_SETTINGS.copy()
+    merged.update({k: v for k, v in stored.items() if v is not None})
+    return merged
+
+
+async def update_settings(conn, settings: dict):
+    await ensure_settings_table(conn)
+    for key, value in settings.items():
+        await conn.execute(
+            "INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+            (key, value),
+        )
+    await conn.commit()
 
 
 async def add_song(conn, name, artist, language, genre, url):
@@ -133,10 +194,11 @@ async def index(request):
     songs = await fetch_songs(conn)
     languages = await fetch_unique_languages(conn)
     genres = await fetch_unique_genres(conn)
+    settings = await get_settings(conn)
     return aiohttp_jinja2.render_template(
         "index.html",
         request,
-        {"songs": songs, "languages": languages, "genres": genres},
+        {"songs": songs, "languages": languages, "genres": genres, "settings": settings},
     )
 
 
@@ -182,10 +244,16 @@ async def admin_page(request):
     _ = require_admin(request)
     conn = request.app["db_conn"]
     songs = await fetch_songs(conn)
+    settings = await get_settings(conn)
     return aiohttp_jinja2.render_template(
         "admin.html",
         request,
-        {"songs": songs, "message": request.query.get("message", ""), "token": request.query.get("token", "")},
+        {
+            "songs": songs,
+            "settings": settings,
+            "message": request.query.get("message", ""),
+            "token": request.query.get("token", ""),
+        },
     )
 
 
@@ -221,6 +289,27 @@ async def admin_action(request):
             dest = os.path.join("backup", "songs_backup.json")
             saved = await backup_songs(conn, dest)
             message = f"备份已生成: {saved}"
+        elif action == "settings":
+            bg_file = form.get("background_file")
+            singer_file = form.get("singer_file")
+            new_settings = {
+                "title": form.get("title", "").strip() or DEFAULT_SETTINGS["title"],
+                "live_url": form.get("live_url", "").strip() or DEFAULT_SETTINGS["live_url"],
+                "background_url": form.get("background_url", "").strip() or DEFAULT_SETTINGS["background_url"],
+                "singer_url": form.get("singer_url", "").strip() or DEFAULT_SETTINGS["singer_url"],
+                "singer_name": form.get("singer_name", "").strip() or DEFAULT_SETTINGS["singer_name"],
+                "singer_intro": form.get("singer_intro", "").strip() or DEFAULT_SETTINGS["singer_intro"],
+            }
+            if hasattr(bg_file, "file") and bg_file.filename:
+                saved = save_file_field(bg_file, "bg")
+                if saved:
+                    new_settings["background_url"] = saved
+            if hasattr(singer_file, "file") and singer_file.filename:
+                saved = save_file_field(singer_file, "singer")
+                if saved:
+                    new_settings["singer_url"] = saved
+            await update_settings(conn, new_settings)
+            message = "站点信息已更新"
         else:
             message = "未知操作"
     except Exception as exc:
