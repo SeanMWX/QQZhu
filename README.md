@@ -22,6 +22,6 @@
 ```bash
 docker build -t qqzhu .
 # 示例：监听 8080，设置后台口令，持久化数据库到宿主机 ./instance
-docker run -d --name qqzhu -p 13897:8080 -e QQZHU_PORT=8080 -e QQZHU_ADMIN_TOKEN=yourtoken qqzhu
+docker run -d --name qqzhu -p 13897:8080 -e QQZHU_PORT=8080 qqzhu
 ```
 启动后访问 `http://localhost:8080/`，后台初始化流程同上。

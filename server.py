@@ -32,6 +32,8 @@ class Config:
     def __init__(self, filename="config.ini"):
         self.config = CaseSensitiveConfigParser()
         self.config.read(filename)
+        # cache env overrides
+        self.env_admin_token = os.environ.get("QQZHU_ADMIN_TOKEN")
 
     def _get(self, section, key, default):
         if self.config.has_section(section) and key in self.config[section]:
@@ -48,7 +50,7 @@ class Config:
         return int(self._get("server", "port", 8080))
 
     def admin_token(self):
-        return os.environ.get("QQZHU_ADMIN_TOKEN") or self._get("server", "admin_token", "")
+        return self.env_admin_token or self._get("server", "admin_token", "")
 
 
 async def create_db_connection(db_path):
@@ -414,6 +416,7 @@ async def admin_page(request):
             "settings": settings,
             "message": request.query.get("message", ""),
             "token": request.query.get("token", ""),
+            "env_admin_token": bool(request.app["config"].env_admin_token),
         },
     )
 
@@ -511,6 +514,8 @@ async def admin_action(request):
             await update_settings(conn, new_settings)
             message = "站点信息已更新"
         elif action == "update_admin_token":
+            if request.app["config"].env_admin_token:
+                raise ValueError("已通过环境变量设置 admin_token，无法在后台修改，请调整环境变量后重启")
             new_token = form.get("new_token", "").strip()
             confirm_token = form.get("confirm_token", "").strip()
             if not new_token:
