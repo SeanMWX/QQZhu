@@ -228,33 +228,6 @@
         </div>
 
         <div class="panel">
-            <h2>新增歌曲</h2>
-            <form method="post" action="/admin/action">
-                <input type="hidden" name="action" value="song_new">
-                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-
-                <label for="song_name_new">歌名</label>
-                <input type="text" id="song_name_new" name="song_name" required>
-
-                <label for="artist_new">歌手</label>
-                <input type="text" id="artist_new" name="artist" required>
-
-                <label for="language_new">语言</label>
-                <input type="text" id="language_new" name="language" placeholder="中文/英文/日文...">
-
-                <label for="genre_new">风格</label>
-                <input type="text" id="genre_new" name="genre" placeholder="抒情/摇滚...">
-
-                <label for="url_new">播放链接</label>
-                <input type="text" id="url_new" name="url" placeholder="可留空，用 '-' 占位">
-
-                <div class="actions">
-                    <button type="submit"><i class="fa fa-plus"></i> 保存歌曲</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="panel">
             <h2>歌曲列表（编辑/删除）</h2>
             <div class="song-list">
                 <table id="songs">
