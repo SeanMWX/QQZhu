@@ -111,6 +111,7 @@
         th, td { padding: 8px; border-bottom: 1px solid #e5e5e5; text-align: left; }
         .small-input { width: 100%; max-width: 200px; }
         .backup-box {
+            align-items: center;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -118,6 +119,40 @@
             flex-wrap: wrap;
         }
         .tips { font-size: 13px; color: #666; margin-top: 4px; }
+        
+        .file-input {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+        .file-input input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+        .file-input .btn {
+            background-color: #f0f2ff;
+            color: #3748a0;
+            border: 1px solid #d0d6f5;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .file-input .btn:hover { background-color: #e4e8ff; }
+        .file-input .filename {
+            margin-left: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
         @media (max-width: 768px) {
             .container { padding: 16px; }
             .navbar a { margin: 0 10px; font-size: 16px; }
@@ -255,11 +290,24 @@
             <form method="post" action="/admin/action" class="backup-box" enctype="multipart/form-data" onsubmit="return confirm('将用备份覆盖当前歌单，确认吗？');">
                 <input type="hidden" name="action" value="restore_backup">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-                <div>上传备份（JSON），或留空使用 <code>backup/songs_backup.json</code> 恢复，覆盖当前歌单。</div>
-                <input type="file" name="backup_file" accept=".json">
+                <div style="flex:1; min-width:240px;">上传备份（JSON），或留空使用 <code>backup/songs_backup.json</code> 恢复，覆盖当前歌单。</div>
+                <label class="file-input">
+                    <span class="btn"><i class="fa fa-file"></i> <span id="file-label">选择文件</span></span>
+                    <input type="file" name="backup_file" accept=".json" id="backup-file-input">
+                </label>
                 <button type="submit" style="background:#e67e22;"><i class="fa fa-upload"></i> 恢复</button>
             </form>
         </div>
     </div>
+    <script>
+        const backupInput = document.getElementById('backup-file-input');
+        const fileLabel = document.getElementById('file-label');
+        if (backupInput && fileLabel) {
+            backupInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                fileLabel.textContent = file ? file.name : '选择文件';
+            });
+        }
+    </script>
 </body>
 </html>
