@@ -220,7 +220,7 @@
     <div class="intro">
         <img src="{{ settings.singer_url }}" alt="歌手图片">
         <h2><a href="{{ settings.live_url }}" target="_blank">{{ settings.singer_name }}</a></h2>
-        <p>{{ settings.singer_intro | safe }}</p>
+        <p>{{ settings.singer_intro.replace('\n','<br/>') | safe }}</p>
     </div>
 
     <!-- 歌曲列表 -->
