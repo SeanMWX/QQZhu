@@ -199,6 +199,7 @@
             <h2>站点信息</h2>
             <form method="post" action="/admin/action" enctype="multipart/form-data">
                 <input type="hidden" name="action" value="settings">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
 
                 <label for="title">网页标题</label>
@@ -248,6 +249,7 @@
                             <form method="post" action="/admin/action" class="song-form">
                                 <input type="hidden" name="action" value="song_update">
                                 <input type="hidden" name="song_id" value="{{ song.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                                 <td>{{ song.id }}</td>
                                 <td><input class="small-input" type="text" name="song_name" value="{{ song.name }}" required></td>
@@ -261,6 +263,7 @@
                                     <form method="post" action="/admin/action" style="display:inline;" class="song-delete-form">
                                         <input type="hidden" name="action" value="song_delete">
                                         <input type="hidden" name="song_id" value="{{ song.id }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                         {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                                         <button type="submit" style="background:#e74c3c;"><i class="fa fa-trash"></i></button>
                                     </form>
@@ -272,6 +275,7 @@
                         <tr>
                             <form method="post" action="/admin/action" class="song-new-form">
                                 <input type="hidden" name="action" value="song_new">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                                 <td>+</td>
                                 <td><input class="small-input" type="text" name="song_name" placeholder="歌名" required></td>
@@ -293,12 +297,14 @@
             <h2>备份 / 恢复</h2>
             <form method="post" action="/admin/action" class="backup-box" style="margin-bottom:10px;">
                 <input type="hidden" name="action" value="backup">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div>生成 <code>backup/songs_backup.json</code>（UTF-8）。<a class="info-link" href="#" onclick="toggleBackupHelp(); return false;">格式说明</a></div>
                 <button type="submit"><i class="fa fa-download"></i> 备份</button>
             </form>
             <form method="post" action="/admin/action" class="backup-box" enctype="multipart/form-data" onsubmit="return confirm('将用备份覆盖当前歌单，确认吗？');">
                 <input type="hidden" name="action" value="restore_backup">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div style="flex:1; min-width:240px;">上传备份（JSON 或 XLSX），或留空使用 <code>backup/songs_backup.json</code> 恢复，覆盖当前歌单。</div>
                 <label class="file-input">
@@ -322,6 +328,7 @@
             {% endif %}
             <form method="post" action="/admin/action" class="backup-box" onsubmit="return handleTokenUpdate(event);">
                 <input type="hidden" name="action" value="update_admin_token">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div style="flex:1; min-width:240px;">修改后台 admin_token（将写入 config.ini）。</div>
                 <input type="password" name="new_token" placeholder="新 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password" {% if env_admin_token %}disabled{% endif %}>

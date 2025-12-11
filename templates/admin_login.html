@@ -71,6 +71,7 @@
         <h1>后台登录</h1>
         <form method="post" action="/admin/login">
             <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <label for="token">Admin Token</label>
             <input type="password" id="token" name="token" required autocomplete="current-password">
             <button type="submit"><i class="fa fa-door-open"></i> 登录</button>

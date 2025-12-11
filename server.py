@@ -7,6 +7,7 @@ import aiohttp
 import aiosqlite
 import json
 import os
+import secrets
 import time
 import io
 from urllib.parse import quote
@@ -51,6 +52,55 @@ class Config:
 
     def admin_token(self):
         return self.env_admin_token or self._get("server", "admin_token", "")
+
+
+LOGIN_ATTEMPTS = {}
+LOGIN_LIMIT = 5
+LOGIN_WINDOW = 300  # seconds
+
+
+def _is_rate_limited(ip: str):
+    now = time.time()
+    attempts = LOGIN_ATTEMPTS.get(ip, [])
+    attempts = [t for t in attempts if now - t < LOGIN_WINDOW]
+    LOGIN_ATTEMPTS[ip] = attempts
+    return len(attempts) >= LOGIN_LIMIT
+
+
+def _add_login_failure(ip: str):
+    LOGIN_ATTEMPTS.setdefault(ip, []).append(time.time())
+
+
+def _reset_login_failure(ip: str):
+    LOGIN_ATTEMPTS.pop(ip, None)
+
+
+@web.middleware
+async def csrf_middleware(request, handler):
+    # Only enforce for admin-related endpoints
+    is_admin_path = request.path.startswith("/admin")
+    if is_admin_path:
+        token = request.cookies.get("csrf_token") or secrets.token_urlsafe(32)
+        request["csrf_token"] = token
+
+        if request.method == "POST":
+            try:
+                form = await request.post()
+            except Exception:
+                form = {}
+            form_token = form.get("csrf_token") if hasattr(form, "get") else None
+            header_token = request.headers.get("X-CSRF-Token")
+            cookie_token = request.cookies.get("csrf_token")
+            final_token = form_token or header_token
+            if not cookie_token or not final_token or final_token != cookie_token:
+                raise web.HTTPForbidden(text="Invalid CSRF token")
+
+    response = await handler(request)
+
+    if is_admin_path and "csrf_token" in request:
+        if request.cookies.get("csrf_token") != request["csrf_token"]:
+            response.set_cookie("csrf_token", request["csrf_token"], httponly=True, samesite="Lax")
+    return response
 
 
 async def create_db_connection(db_path):
@@ -333,11 +383,22 @@ async def admin_login_get(request):
     return aiohttp_jinja2.render_template(
         "admin_login.html",
         request,
-        {"next": request.query.get("next", "/admin"), "message": request.query.get("message", "")},
+        {
+            "next": request.query.get("next", "/admin"),
+            "message": request.query.get("message", ""),
+            "csrf_token": request.get("csrf_token", ""),
+        },
     )
 
 
 async def admin_login_post(request):
+    ip = (request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote or "unknown")
+    if _is_rate_limited(ip):
+        return aiohttp_jinja2.render_template(
+            "admin_login.html",
+            request,
+            {"next": request.query.get("next", "/admin"), "message": "尝试过多，请稍后再试", "csrf_token": request.get("csrf_token", "")},
+        )
     if not request.app["config"].admin_token():
         next_url = quote(str(request.rel_url))
         raise web.HTTPFound(location=f"/admin/setup?next={next_url}")
@@ -348,11 +409,13 @@ async def admin_login_post(request):
     if token_cfg and provided == token_cfg:
         resp = web.HTTPFound(location=next_url)
         resp.set_cookie("admin_token", provided, httponly=True, samesite="Lax")
+        _reset_login_failure(ip)
         return resp
+    _add_login_failure(ip)
     return aiohttp_jinja2.render_template(
         "admin_login.html",
         request,
-        {"next": next_url, "message": "Token 错误或未设置"},
+        {"next": next_url, "message": "Token 错误或未设置", "csrf_token": request.get("csrf_token", "")},
     )
 
 
@@ -369,7 +432,11 @@ async def admin_setup_get(request):
     return aiohttp_jinja2.render_template(
         "admin_setup.html",
         request,
-        {"next": request.query.get("next", "/admin"), "message": request.query.get("message", "")},
+        {
+            "next": request.query.get("next", "/admin"),
+            "message": request.query.get("message", ""),
+            "csrf_token": request.get("csrf_token", ""),
+        },
     )
 
 
@@ -384,13 +451,13 @@ async def admin_setup_post(request):
         return aiohttp_jinja2.render_template(
             "admin_setup.html",
             request,
-            {"next": next_url, "message": "Token 不能为空"},
+            {"next": next_url, "message": "Token 不能为空", "csrf_token": request.get("csrf_token", "")},
         )
     if new_token != confirm_token:
         return aiohttp_jinja2.render_template(
             "admin_setup.html",
             request,
-            {"next": next_url, "message": "两次输入的 Token 不一致"},
+            {"next": next_url, "message": "两次输入的 Token 不一致", "csrf_token": request.get("csrf_token", "")},
         )
     cfg = request.app["config"].config
     if not cfg.has_section("server"):
@@ -417,6 +484,7 @@ async def admin_page(request):
             "message": request.query.get("message", ""),
             "token": request.query.get("token", ""),
             "env_admin_token": bool(request.app["config"].env_admin_token),
+            "csrf_token": request.get("csrf_token", ""),
         },
     )
 
@@ -543,7 +611,7 @@ async def admin_action(request):
 
 
 async def init_app():
-    app = web.Application(client_max_size=10 * 1024 * 1024)
+    app = web.Application(client_max_size=10 * 1024 * 1024, middlewares=[csrf_middleware])
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("templates"))
 
     app.router.add_static("/static/", path="static", name="static")

@@ -42,6 +42,7 @@
         <div class="msg">{{ message }}</div>
         <form action="/admin/setup" method="post">
             <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
             <div class="field">
                 <label for="new_token">新的 Token</label>
                 <input id="new_token" name="new_token" type="password" required placeholder="请输入新的后台口令" autocomplete="new-password">
