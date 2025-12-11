@@ -12,6 +12,9 @@ import time
 import io
 from urllib.parse import quote
 from pypinyin import pinyin, Style
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DEFAULT_SETTINGS = {
     "title": "歌单",
@@ -81,6 +84,26 @@ def _add_login_failure(ip: str):
 
 def _reset_login_failure(ip: str):
     LOGIN_ATTEMPTS.pop(ip, None)
+
+
+def update_env_var(key: str, value: str, env_path: str = ".env"):
+    """Persist a key-value to .env, replacing if exists."""
+    lines = []
+    found = False
+    if os.path.exists(env_path):
+        with open(env_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith(f"{key}="):
+                    lines.append(f"{key}={value}\n")
+                    found = True
+                else:
+                    lines.append(line)
+    if not found:
+        lines.append(f"{key}={value}\n")
+    with open(env_path, "w", encoding="utf-8") as f:
+        f.writelines(lines)
+    # Also update process env for current runtime
+    os.environ[key] = value
 
 
 @web.middleware
@@ -478,12 +501,8 @@ async def admin_setup_post(request):
             request,
             {"next": next_url, "message": "两次输入的 Token 不一致", "csrf_token": request.get("csrf_token", "")},
         )
-    cfg = request.app["config"].config
-    if not cfg.has_section("server"):
-        cfg.add_section("server")
-    cfg.set("server", "admin_token", new_token)
-    with open("config.ini", "w", encoding="utf-8") as f:
-        cfg.write(f)
+    update_env_var("QQZHU_ADMIN_TOKEN", new_token)
+    request.app["config"].env_admin_token = new_token
     resp = web.HTTPFound(location=next_url)
     resp.set_cookie("admin_token", new_token, httponly=True, samesite="Lax")
     return resp
@@ -601,19 +620,15 @@ async def admin_action(request):
             await update_settings(conn, new_settings)
             message = "站点信息已更新"
         elif action == "update_admin_token":
-            if request.app["config"].env_admin_token:
-                raise ValueError("已通过环境变量设置 admin_token，无法在后台修改，请调整环境变量后重启")
             new_token = form.get("new_token", "").strip()
             confirm_token = form.get("confirm_token", "").strip()
             if not new_token:
                 raise ValueError("新 token 不能为空")
             if new_token != confirm_token:
                 raise ValueError("两次输入的 token 不一致")
-            cfg = request.app["config"].config
-            cfg.set("server", "admin_token", new_token)
-            with open("config.ini", "w", encoding="utf-8") as f:
-                cfg.write(f)
-            message = "admin_token 已更新，请重新登录"
+            update_env_var("QQZHU_ADMIN_TOKEN", new_token)
+            request.app["config"].env_admin_token = new_token
+            message = "admin_token 已更新，请重新登录（值已写入 .env）"
             if wants_json(request):
                 return web.json_response({"ok": True, "action": "update_admin_token", "message": message})
         else:

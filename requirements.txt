@@ -4,3 +4,4 @@ Jinja2==3.1.4
 aiosqlite==0.20.0
 pypinyin==0.50.0
 openpyxl==3.1.5
+python-dotenv==1.0.1

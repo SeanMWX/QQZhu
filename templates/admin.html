@@ -351,17 +351,17 @@
             <h2>安全</h2>
             {% if env_admin_token %}
             <div style="padding:12px; background:#fff3cd; border:1px solid #ffeeba; border-radius:6px; color:#856404; margin-bottom:12px;">
-                当前已通过环境变量设置 admin_token，如需修改请调整环境变量后重启服务。
+                当前已通过环境变量设置 admin_token，后台修改将写入 .env 并覆盖运行时值。
             </div>
             {% endif %}
-            <form method="post" action="/admin/action" class="backup-box" onsubmit="return handleTokenUpdate(event);">
+            <form method="post" action="/admin/action" class="backup-box" data-ajax="true" data-token-form="true" data-confirm="确定修改 admin_token 吗？修改后需重新登录">
                 <input type="hidden" name="action" value="update_admin_token">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-                <div style="flex:1; min-width:240px;">修改后台 admin_token（将写入 config.ini）。</div>
-                <input type="password" name="new_token" placeholder="新 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password" {% if env_admin_token %}disabled{% endif %}>
-                <input type="password" name="confirm_token" placeholder="确认 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password" {% if env_admin_token %}disabled{% endif %}>
-                <button type="submit" style="background:#e74c3c;" {% if env_admin_token %}disabled title="已通过环境变量设置"{% endif %}><i class="fa fa-key"></i> 更新</button>
+                <div style="flex:1; min-width:240px;">修改后台 admin_token（将写入 .env，重启后仍生效）。</div>
+                <input type="password" name="new_token" placeholder="新 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password">
+                <input type="password" name="confirm_token" placeholder="确认 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password">
+                <button type="submit" style="background:#e74c3c;"><i class="fa fa-key"></i> 更新</button>
             </form>
         </div>
     </div>

@@ -14,3 +14,4 @@ static/uploads/
 
 # tools目录暂时不上传
 tools/
+.env
