@@ -257,7 +257,7 @@
         <div class="panel">
             <h2>歌曲列表（编辑/删除）</h2>
             <div class="song-list">
-                <table>
+                <table id="songs">
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -271,8 +271,8 @@
                     </thead>
                     <tbody>
                         {% for song in songs %}
-                        <tr>
-                            <form method="post" action="/admin/action">
+                        <tr class="song-row" data-song-id="{{ song.id }}">
+                            <form method="post" action="/admin/action" class="song-form">
                                 <input type="hidden" name="action" value="song_update">
                                 <input type="hidden" name="song_id" value="{{ song.id }}">
                                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
@@ -285,7 +285,7 @@
                                 <td style="white-space:nowrap;">
                                     <button type="submit" style="margin-right:6px;"><i class="fa fa-save"></i></button>
                             </form>
-                                    <form method="post" action="/admin/action" style="display:inline;">
+                                    <form method="post" action="/admin/action" style="display:inline;" class="song-delete-form">
                                         <input type="hidden" name="action" value="song_delete">
                                         <input type="hidden" name="song_id" value="{{ song.id }}">
                                         {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
@@ -295,6 +295,23 @@
                         </tr>
                         {% endfor %}
                     </tbody>
+                    <tfoot>
+                        <tr>
+                            <form method="post" action="/admin/action" class="song-new-form">
+                                <input type="hidden" name="action" value="song_new">
+                                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+                                <td>+</td>
+                                <td><input class="small-input" type="text" name="song_name" placeholder="歌名" required></td>
+                                <td><input class="small-input" type="text" name="artist" placeholder="歌手" required></td>
+                                <td><input class="small-input" type="text" name="language" placeholder="语言"></td>
+                                <td><input class="small-input" type="text" name="genre" placeholder="风格"></td>
+                                <td><input class="small-input" type="text" name="url" placeholder="url 或 -"></td>
+                                <td style="white-space:nowrap;">
+                                    <button type="submit"><i class="fa fa-plus"></i></button>
+                                </td>
+                            </form>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
         </div>
@@ -336,6 +353,159 @@
             const help = document.getElementById('backup-help');
             if (help) help.style.display = help.style.display === 'none' ? 'block' : 'none';
         }
+    </script>
+    <script>
+        const messageBox = document.querySelector('.message');
+        function setMessage(text) {
+            if (messageBox) {
+                messageBox.textContent = text || '';
+                messageBox.style.display = text ? 'block' : 'none';
+            }
+        }
+
+        // Async song actions
+        function bindSongForms() {
+            document.querySelectorAll('.song-form').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(form);
+                    fd.append('action', 'song_update');
+                    try {
+                        const res = await fetch('/admin/action', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: fd
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            setMessage('歌曲已更新');
+                        } else {
+                            setMessage(data.message || '更新失败');
+                        }
+                    } catch (err) {
+                        setMessage('更新失败');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.song-delete-form').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(form);
+                    fd.append('action', 'song_delete');
+                    const row = form.closest('.song-row');
+                    try {
+                        const res = await fetch('/admin/action', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: fd
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            if (row) row.remove();
+                            setMessage('歌曲已删除');
+                        } else {
+                            setMessage(data.message || '删除失败');
+                        }
+                    } catch (err) {
+                        setMessage('删除失败');
+                    }
+                });
+            });
+
+            const newForm = document.querySelector('.song-new-form');
+            if (newForm) {
+                newForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(newForm);
+                    fd.append('action', 'song_new');
+                    try {
+                        const res = await fetch('/admin/action', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: fd
+                        });
+                        const data = await res.json();
+                        if (data.ok && data.song) {
+                            appendSongRow(data.song);
+                            newForm.reset();
+                            setMessage('歌曲已添加');
+                        } else {
+                            setMessage(data.message || '添加失败');
+                        }
+                    } catch (err) {
+                        setMessage('添加失败');
+                    }
+                });
+            }
+        }
+
+        function appendSongRow(song) {
+            const tbody = document.querySelector('table tbody');
+            if (!tbody) return;
+            const tr = document.createElement('tr');
+            tr.className = 'song-row';
+            tr.dataset.songId = song.id;
+            tr.innerHTML = `
+                <form method="post" action="/admin/action" class="song-form">
+                    <input type="hidden" name="action" value="song_update">
+                    <input type="hidden" name="song_id" value="${song.id}">
+                    <td>${song.id}</td>
+                    <td><input class="small-input" type="text" name="song_name" value="${song.name}" required></td>
+                    <td><input class="small-input" type="text" name="artist" value="${song.artist}" required></td>
+                    <td><input class="small-input" type="text" name="language" value="${song.language || ''}"></td>
+                    <td><input class="small-input" type="text" name="genre" value="${song.genre || ''}"></td>
+                    <td><input class="small-input" type="text" name="url" value="${song.url || '-'}"></td>
+                    <td style="white-space:nowrap;">
+                        <button type="submit" style="margin-right:6px;"><i class="fa fa-save"></i></button>
+                </form>
+                        <form method="post" action="/admin/action" style="display:inline;" class="song-delete-form">
+                            <input type="hidden" name="action" value="song_delete">
+                            <input type="hidden" name="song_id" value="${song.id}">
+                            <button type="submit" style="background:#e74c3c;"><i class="fa fa-trash"></i></button>
+                        </form>
+                    </td>
+            `;
+            // insert before tfoot
+            const tfoot = document.querySelector('table tfoot');
+            tbody.appendChild(tr);
+            // bind events for new row
+            tr.querySelectorAll('.song-form').forEach(f => {
+                f.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(f);
+                    fd.append('action', 'song_update');
+                    try {
+                        const res = await fetch('/admin/action', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: fd
+                        });
+                        const data = await res.json();
+                        setMessage(data.ok ? '歌曲已更新' : (data.message || '更新失败'));
+                    } catch { setMessage('更新失败'); }
+                });
+            });
+            tr.querySelectorAll('.song-delete-form').forEach(f => {
+                f.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(f);
+                    fd.append('action', 'song_delete');
+                    try {
+                        const res = await fetch('/admin/action', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: fd
+                        });
+                        const data = await res.json();
+                        if (data.ok) tr.remove();
+                        setMessage(data.ok ? '歌曲已删除' : (data.message || '删除失败'));
+                    } catch { setMessage('删除失败'); }
+                });
+            });
+        }
+
+        bindSongForms();
     </script>
 </body>
 </html>

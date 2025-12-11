@@ -80,14 +80,24 @@ def save_file_field(file_field, prefix):
     return f"/static/uploads/{safe_name}"
 
 
+def wants_json(request):
+    accept = request.headers.get("Accept", "")
+    return "application/json" in accept or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+
 async def fetch_songs(conn):
-    """获取歌曲列表并排序（中文优先，长度优先，拼音/字母排序）。"""
+    """获取歌曲列表，按 id 升序。"""
     cursor = await conn.execute(
-        "SELECT id, name, artist, language, genre, url FROM songs"
+        "SELECT id, name, artist, language, genre, url FROM songs ORDER BY id ASC"
     )
     rows = await cursor.fetchall()
     await cursor.close()
-    songs = [dict(row) for row in rows]
+    return [dict(row) for row in rows]
+
+
+async def fetch_songs_sorted(conn):
+    """获取歌曲列表，按原先规则排序（中文优先、短优先、拼音/字母）。"""
+    songs = await fetch_songs(conn)
 
     def sort_key(song):
         name = song["name"]
@@ -95,9 +105,7 @@ async def fetch_songs(conn):
         language_priority = 0 if language == "中文" else 1
         word_count = len(name)
         if language == "中文":
-            name_for_sort = "".join(
-                [item[0] for item in pinyin(name, style=Style.NORMAL)]
-            )
+            name_for_sort = "".join([item[0] for item in pinyin(name, style=Style.NORMAL)])
         else:
             name_for_sort = name.lower()
         return (language_priority, word_count, name_for_sort)
@@ -141,11 +149,14 @@ async def update_settings(conn, settings: dict):
 
 
 async def add_song(conn, name, artist, language, genre, url):
-    await conn.execute(
+    cursor = await conn.execute(
         "INSERT INTO songs (name, artist, language, genre, url) VALUES (?, ?, ?, ?, ?)",
         (name, artist, language, genre, url),
     )
+    song_id = cursor.lastrowid
     await conn.commit()
+    await cursor.close()
+    return song_id
 
 
 async def update_song(conn, song_id, name, artist, language, genre, url):
@@ -256,7 +267,7 @@ def require_admin(request, form=None):
 
 async def index(request):
     conn = request.app["db_conn"]
-    songs = await fetch_songs(conn)
+    songs = await fetch_songs_sorted(conn)
     languages = await fetch_unique_languages(conn)
     genres = await fetch_unique_genres(conn)
     settings = await get_settings(conn)
@@ -341,8 +352,12 @@ async def admin_action(request):
             language = form.get("language", "").strip()
             genre = form.get("genre", "").strip()
             url = form.get("url", "").strip() or "-"
-            await add_song(conn, name, artist, language, genre, url)
+            new_id = await add_song(conn, name, artist, language, genre, url)
             message = "歌曲已添加"
+            if wants_json(request):
+                return web.json_response({"ok": True, "action": "song_new", "song": {
+                    "id": new_id, "name": name, "artist": artist, "language": language, "genre": genre, "url": url
+                }})
         elif action == "song_update":
             song_id = int(form.get("song_id", 0))
             name = form.get("song_name", "").strip()
@@ -352,10 +367,14 @@ async def admin_action(request):
             url = form.get("url", "").strip() or "-"
             await update_song(conn, song_id, name, artist, language, genre, url)
             message = "歌曲已更新"
+            if wants_json(request):
+                return web.json_response({"ok": True, "action": "song_update", "song_id": song_id})
         elif action == "song_delete":
             song_id = int(form.get("song_id", 0))
             await delete_song(conn, song_id)
             message = "歌曲已删除"
+            if wants_json(request):
+                return web.json_response({"ok": True, "action": "song_delete", "song_id": song_id})
         elif action == "backup":
             dest = os.path.join("backup", "songs_backup.json")
             saved = await backup_songs(conn, dest)
@@ -375,6 +394,8 @@ async def admin_action(request):
                         raise ValueError("仅支持 .json 或 .xlsx 备份文件")
                     count = await restore_songs_from_data(conn, songs)
                     message = f"已从上传的备份恢复 {count} 首歌曲"
+                    if wants_json(request):
+                        return web.json_response({"ok": True, "action": "restore_backup", "count": count})
                 else:
                     src = os.path.join("backup", "songs_backup.json")
                     if not os.path.exists(src):
@@ -384,6 +405,8 @@ async def admin_action(request):
                     songs = parse_backup_json(content)
                     count = await restore_songs_from_data(conn, songs)
                     message = f"已从本地备份恢复 {count} 首歌曲"
+                    if wants_json(request):
+                        return web.json_response({"ok": True, "action": "restore_backup", "count": count})
             except Exception as exc:
                 message = f"恢复失败: {exc}"
         elif action == "settings":
@@ -412,9 +435,13 @@ async def admin_action(request):
             message = "未知操作"
     except Exception as exc:
         message = f"操作失败: {exc}"
+        if wants_json(request):
+            return web.json_response({"ok": False, "message": message})
 
+    if wants_json(request):
+        return web.json_response({"ok": True, "message": message})
     params = [f"message={quote(message)}"]
-    return web.HTTPFound(location="/admin?" + "&".join(params))
+    return web.HTTPFound(location="/admin?" + "&".join(params) + "#songs")
 
 
 async def init_app():
