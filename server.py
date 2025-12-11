@@ -14,7 +14,7 @@ from pypinyin import pinyin, Style
 
 DEFAULT_SETTINGS = {
     "title": "歌单",
-    "live_url": "https://live.bilibili.com/1825831614",
+    "live_url": "https://",
     "background_url": "/static/background.jpg",
     "singer_url": "/static/singer.jpg",
     "singer_name": "歌手名字",
