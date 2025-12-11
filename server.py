@@ -59,16 +59,24 @@ LOGIN_LIMIT = 5
 LOGIN_WINDOW = 300  # seconds
 
 
-def _is_rate_limited(ip: str):
+def _login_attempts_info(ip: str):
     now = time.time()
     attempts = LOGIN_ATTEMPTS.get(ip, [])
     attempts = [t for t in attempts if now - t < LOGIN_WINDOW]
     LOGIN_ATTEMPTS[ip] = attempts
-    return len(attempts) >= LOGIN_LIMIT
+    remaining = max(LOGIN_LIMIT - len(attempts), 0)
+    wait = 0
+    if remaining == 0 and attempts:
+        wait = max(0, int(LOGIN_WINDOW - (now - attempts[0])))
+    return remaining, wait
 
 
 def _add_login_failure(ip: str):
-    LOGIN_ATTEMPTS.setdefault(ip, []).append(time.time())
+    now = time.time()
+    attempts = LOGIN_ATTEMPTS.get(ip, [])
+    attempts = [t for t in attempts if now - t < LOGIN_WINDOW]
+    attempts.append(now)
+    LOGIN_ATTEMPTS[ip] = attempts
 
 
 def _reset_login_failure(ip: str):
@@ -393,11 +401,16 @@ async def admin_login_get(request):
 
 async def admin_login_post(request):
     ip = (request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote or "unknown")
-    if _is_rate_limited(ip):
+    remaining, wait = _login_attempts_info(ip)
+    if remaining == 0:
         return aiohttp_jinja2.render_template(
             "admin_login.html",
             request,
-            {"next": request.query.get("next", "/admin"), "message": "尝试过多，请稍后再试", "csrf_token": request.get("csrf_token", "")},
+            {
+                "next": request.query.get("next", "/admin"),
+                "message": f"尝试过多，请 {wait} 秒后再试",
+                "csrf_token": request.get("csrf_token", ""),
+            },
         )
     if not request.app["config"].admin_token():
         next_url = quote(str(request.rel_url))
@@ -412,10 +425,16 @@ async def admin_login_post(request):
         _reset_login_failure(ip)
         return resp
     _add_login_failure(ip)
+    remaining_after, wait_after = _login_attempts_info(ip)
+    message_text = "Token 错误或未设置"
+    if remaining_after > 0:
+        message_text += f"；还可再试 {remaining_after} 次"
+    else:
+        message_text += f"；请 {wait_after} 秒后再试"
     return aiohttp_jinja2.render_template(
         "admin_login.html",
         request,
-        {"next": next_url, "message": "Token 错误或未设置", "csrf_token": request.get("csrf_token", "")},
+        {"next": next_url, "message": message_text, "csrf_token": request.get("csrf_token", "")},
     )
 
 
