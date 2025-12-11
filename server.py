@@ -240,6 +240,12 @@ async def admin_login_post(request):
     )
 
 
+async def admin_logout(request):
+    resp = web.HTTPFound(location="/admin/login")
+    resp.del_cookie("admin_token")
+    return resp
+
+
 async def admin_page(request):
     _ = require_admin(request)
     conn = request.app["db_conn"]
@@ -335,6 +341,7 @@ async def init_app():
     app.router.add_get("/", index)
     app.router.add_get("/admin/login", admin_login_get)
     app.router.add_post("/admin/login", admin_login_post)
+    app.router.add_get("/admin/logout", admin_logout)
     app.router.add_get("/admin", admin_page)
     app.router.add_post("/admin/action", admin_action)
 
