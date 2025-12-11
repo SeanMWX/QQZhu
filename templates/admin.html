@@ -112,6 +112,7 @@
         .small-input { width: 100%; max-width: 200px; }
         .backup-box {
             align-items: center;
+            align-items: center;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -152,6 +153,13 @@
             white-space: nowrap;
         }
         .file-input .btn:hover { background-color: #e4e8ff; }
+        
+        .info-link {
+            color: #6c7ae0;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .info-link:hover { text-decoration: underline; }
         .file-input .btn #file-label {
             max-width: 140px;
             overflow: hidden;
@@ -296,7 +304,7 @@
             <form method="post" action="/admin/action" class="backup-box" style="margin-bottom:10px;">
                 <input type="hidden" name="action" value="backup">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-                <div>生成 <code>backup/songs_backup.json</code>（UTF-8）。</div>
+                <div>生成 <code>backup/songs_backup.json</code>（UTF-8）。<a class="info-link" href="#" onclick="toggleBackupHelp(); return false;">格式说明</a></div>
                 <button type="submit"><i class="fa fa-download"></i> 备份</button>
             </form>
             <form method="post" action="/admin/action" class="backup-box" enctype="multipart/form-data" onsubmit="return confirm('将用备份覆盖当前歌单，确认吗？');">
@@ -309,6 +317,10 @@
                 </label>
                 <button type="submit" style="background:#e67e22;"><i class="fa fa-upload"></i> 恢复</button>
             </form>
+            <div id="backup-help" style="display:none; font-size:13px; color:#555; margin-top:8px;">
+                <strong>JSON：</strong>为后台导出的原始格式。<br/>
+                <strong>XLSX：</strong>首行表头必须依次为：歌名 | 歌手 | 语言 | 风格 | url；第二行开始为数据，缺失可留空，url 为空时用 “-” 代替。
+            </div>
         </div>
     </div>
     <script>
@@ -319,6 +331,10 @@
                 const file = e.target.files && e.target.files[0];
                 fileLabel.textContent = file ? file.name : '选择文件';
             });
+        }
+        function toggleBackupHelp() {
+            const help = document.getElementById('backup-help');
+            if (help) help.style.display = help.style.display === 'none' ? 'block' : 'none';
         }
     </script>
 </body>
