@@ -181,6 +181,34 @@
     </style>
 </head>
 <body>
+    <style>
+        /* Toast 提示样式 */
+        #toast-container {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 2000;
+            max-width: 320px;
+        }
+        .toast {
+            padding: 12px 14px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+            background: #f0f4ff;
+            color: #1f3b8e;
+            font-size: 14px;
+            border: 1px solid #d8e2ff;
+            animation: fadeIn 0.2s ease, slideIn 0.2s ease;
+        }
+        .toast.success { background: #e8f7ef; color: #1f7a3d; border-color: #c7edd8; }
+        .toast.error { background: #fdecea; color: #b23024; border-color: #f7c6c2; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { from { transform: translateY(-6px); } to { transform: translateY(0); } }
+    </style>
+    <div id="toast-container"></div>
     <div class="navbar">
         <a href="/">歌单</a>
         <a href="/admin">后台</a>
@@ -352,12 +380,30 @@
         }
     </script>
     <script>
+        const csrfToken = "{{ csrf_token|e }}";
+        const adminToken = "{{ token|e }}";
+        const toastContainer = document.getElementById('toast-container');
         const messageBox = document.querySelector('.message');
-        function setMessage(text) {
+        function showToast(text, type = 'info') {
+            if (!text || !toastContainer) return;
+            const node = document.createElement('div');
+            node.className = `toast ${type}`;
+            node.textContent = text;
+            toastContainer.appendChild(node);
+            setTimeout(() => {
+                node.style.opacity = '0';
+                setTimeout(() => node.remove(), 180);
+            }, 2400);
+        }
+        function setMessage(text, type = 'info') {
             if (messageBox) {
                 messageBox.textContent = text || '';
                 messageBox.style.display = text ? 'block' : 'none';
             }
+            if (text) showToast(text, type);
+        }
+        if (messageBox && messageBox.textContent.trim()) {
+            showToast(messageBox.textContent.trim(), 'info');
         }
 
         function handleTokenUpdate(e) {
@@ -387,12 +433,12 @@
                         });
                         const data = await res.json();
                         if (data.ok) {
-                            setMessage('歌曲已更新');
+                            setMessage('歌曲已更新','success');
                         } else {
-                            setMessage(data.message || '更新失败');
+                            setMessage(data.message || '更新失败','error');
                         }
                     } catch (err) {
-                        setMessage('更新失败');
+                        setMessage('更新失败','error');
                     }
                 });
             });
@@ -412,12 +458,12 @@
                         const data = await res.json();
                         if (data.ok) {
                             if (row) row.remove();
-                            setMessage('歌曲已删除');
+                            setMessage('歌曲已删除','success');
                         } else {
-                            setMessage(data.message || '删除失败');
+                            setMessage(data.message || '删除失败','error');
                         }
                     } catch (err) {
-                        setMessage('删除失败');
+                        setMessage('删除失败','error');
                     }
                 });
             });
@@ -438,12 +484,12 @@
                         if (data.ok && data.song) {
                             appendSongRow(data.song);
                             newForm.reset();
-                            setMessage('歌曲已添加');
+                            setMessage('歌曲已添加','success');
                         } else {
-                            setMessage(data.message || '添加失败');
+                            setMessage(data.message || '添加失败','error');
                         }
                     } catch (err) {
-                        setMessage('添加失败');
+                        setMessage('添加失败','error');
                     }
                 });
             }
@@ -458,6 +504,8 @@
             tr.innerHTML = `
                 <form method="post" action="/admin/action" class="song-form">
                     <input type="hidden" name="action" value="song_update">
+                    ${csrfToken ? `<input type="hidden" name="csrf_token" value="${csrfToken}">` : ''}
+                    ${adminToken ? `<input type="hidden" name="token" value="${adminToken}">` : ''}
                     <input type="hidden" name="song_id" value="${song.id}">
                     <td>${song.id}</td>
                     <td><input class="small-input" type="text" name="song_name" value="${song.name}" required></td>
@@ -470,6 +518,8 @@
                 </form>
                         <form method="post" action="/admin/action" style="display:inline;" class="song-delete-form">
                             <input type="hidden" name="action" value="song_delete">
+                            ${csrfToken ? `<input type="hidden" name="csrf_token" value="${csrfToken}">` : ''}
+                            ${adminToken ? `<input type="hidden" name="token" value="${adminToken}">` : ''}
                             <input type="hidden" name="song_id" value="${song.id}">
                             <button type="submit" style="background:#e74c3c;"><i class="fa fa-trash"></i></button>
                         </form>
@@ -491,8 +541,8 @@
                             body: fd
                         });
                         const data = await res.json();
-                        setMessage(data.ok ? '歌曲已更新' : (data.message || '更新失败'));
-                    } catch { setMessage('更新失败'); }
+                        setMessage(data.ok ? '歌曲已更新' : (data.message || '更新失败'), data.ok ? 'success' : 'error');
+                    } catch { setMessage('更新失败','error'); }
                 });
             });
             tr.querySelectorAll('.song-delete-form').forEach(f => {
@@ -508,8 +558,8 @@
                         });
                         const data = await res.json();
                         if (data.ok) tr.remove();
-                        setMessage(data.ok ? '歌曲已删除' : (data.message || '删除失败'));
-                    } catch { setMessage('删除失败'); }
+                        setMessage(data.ok ? '歌曲已删除' : (data.message || '删除失败'), data.ok ? 'success' : 'error');
+                    } catch { setMessage('删除失败','error'); }
                 });
             });
         }
