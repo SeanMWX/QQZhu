@@ -1,4 +1,16 @@
+# backup备份不上传
 backup/
+
+# 数据库不上传
+instance/
+
+# 配置文件不上传
 config.ini
 output.txt
 songs.xlsx
+
+# 上传的文件不上传
+static/uploads/
+
+# tools目录暂时不上传
+tools/
