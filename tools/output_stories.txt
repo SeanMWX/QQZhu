@@ -2,20 +2,21 @@ DROP TABLE IF EXISTS story_fans;
 DROP TABLE IF EXISTS stories;
 
 -- 创建 stories 表
-CREATE TABLE stories (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
+CREATE TABLE IF NOT EXISTS stories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
     content TEXT NOT NULL
 );
 
 -- 创建 story_fans 表（关联表）
-CREATE TABLE story_fans (
-    story_id INT,
-    fan_id BIGINT,
-    PRIMARY KEY (story_id, fan_id),  -- 联合主键
+CREATE TABLE IF NOT EXISTS story_fans (
+    story_id INTEGER,
+    fan_id INTEGER,
+    PRIMARY KEY (story_id, fan_id),  -- 复合主键
     FOREIGN KEY (story_id) REFERENCES stories(id),
     FOREIGN KEY (fan_id) REFERENCES fans(id)
 );
+
 
 INSERT INTO stories (title, content) VALUES
 ('向邪恶掏出追追！', '据可靠小道消息，黄豆豆学生时代，曾是至高无上的追追皇帝，一旦见到有违法犯罪行为方式，将会掏出追追进行狠狠地制裁！'),

@@ -2,296 +2,238 @@ import aiohttp_jinja2
 import jinja2
 from aiohttp import web
 import configparser
-import aiomysql
 import asyncio
-import json
 import aiohttp
-import re
+import aiosqlite
+import json
+import os
+from urllib.parse import quote
 from pypinyin import pinyin, Style
+
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
     def optionxform(self, optionstr):
         return optionstr
 
+
 class Config:
     """负责读取和管理配置文件的类。"""
-    def __init__(self, filename='config.ini'):
+
+    def __init__(self, filename="config.ini"):
         self.config = CaseSensitiveConfigParser()
         self.config.read(filename)
 
-    def db_config(self):
-        config = self.config['database']
-        return {
-            'host': config.get('host'),
-            'port': int(config.get('port', 3306)),
-            'user': config.get('user'),
-            'password': config.get('password'),
-            'db': config.get('database'), 
-            'charset': 'utf8mb4',
-        }
+    def db_path(self):
+        return self.config["database"].get("path", "instance/qqzhu.db")
 
     def server_port(self):
-        return int(self.config['server'].get('port', 8080))
+        return int(self.config["server"].get("port", 8080))
 
-async def create_db_pool(loop, **db_config):
-    """Creates and returns an aiomysql connection pool."""
-    db_config['pool_recycle'] = 3600
-    db_config['autocommit'] = True
-    return await aiomysql.create_pool(loop=loop, **db_config)
+    def admin_token(self):
+        return self.config["server"].get("admin_token", "")
 
-async def fetch_songs(pool):
-    """Fetches all songs from the database and sorts them according to the specified rules."""
-    async with pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT name, artist, language, genre, url FROM songs")  # 查询所有歌曲
-            songs = await cur.fetchall()
 
-    # 自定义排序规则
+async def create_db_connection(db_path):
+    conn = await aiosqlite.connect(db_path)
+    conn.row_factory = aiosqlite.Row
+    return conn
+
+
+async def fetch_songs(conn):
+    """获取歌曲列表并排序（中文优先，长度优先，拼音/字母排序）。"""
+    cursor = await conn.execute(
+        "SELECT id, name, artist, language, genre, url FROM songs"
+    )
+    rows = await cursor.fetchall()
+    await cursor.close()
+    songs = [dict(row) for row in rows]
+
     def sort_key(song):
-        name = song['name']
-        language = song['language']
-
-        # 1. 中文在前，其他语言在后
-        language_priority = 0 if language == '中文' else 1
-
-        # 2. 在同一语言中，字数少的在前
+        name = song["name"]
+        language = song["language"]
+        language_priority = 0 if language == "中文" else 1
         word_count = len(name)
-
-        # 3. 在同一个字数中，按照拼音或字母排序
-        if language == '中文':
-            # 将中文转换为拼音（全拼），用于排序
-            pinyin_name = ''.join([item[0] for item in pinyin(name, style=Style.NORMAL)])
-            name_for_sort = pinyin_name
+        if language == "中文":
+            name_for_sort = "".join(
+                [item[0] for item in pinyin(name, style=Style.NORMAL)]
+            )
         else:
-            # 其他语言直接使用原名字（转换为小写，确保排序不区分大小写）
             name_for_sort = name.lower()
-
         return (language_priority, word_count, name_for_sort)
 
-    # 对歌曲进行排序
-    sorted_songs = sorted(songs, key=sort_key)
+    return sorted(songs, key=sort_key)
 
-    return sorted_songs
 
-async def fetch_unique_languages(pool):
-    """从数据库中获取唯一的语言列表"""
-    async with pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT DISTINCT language FROM songs")
-            result = await cur.fetchall()
-    return [row['language'] for row in result]
+async def fetch_unique_languages(conn):
+    cursor = await conn.execute("SELECT DISTINCT language FROM songs")
+    rows = await cursor.fetchall()
+    await cursor.close()
+    return [row["language"] for row in rows]
 
-async def fetch_unique_genres(pool):
-    """从数据库中获取唯一的风格列表"""
-    async with pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("SELECT DISTINCT genre FROM songs")
-            result = await cur.fetchall()
-    return [row['genre'] for row in result]
 
-async def fetch_stories(pool):
-    """获取所有故事及其关联的粉丝信息"""
-    async with pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("""
-                SELECT 
-                    stories.id AS story_id,
-                    stories.title,
-                    stories.content,
-                    GROUP_CONCAT(
-                        CONCAT(
-                            fans.id, '|',  -- 粉丝 ID
-                            fans.name, '|',  -- 粉丝名字
-                            fans.bili_name, '|',  -- 粉丝 B 站昵称
-                            fans.bili_face  -- 粉丝头像链接
-                        ) SEPARATOR ';'
-                    ) AS fans_info  -- 将多个粉丝的信息聚合到一个字段中
-                FROM stories
-                JOIN story_fans ON stories.id = story_fans.story_id
-                JOIN fans ON story_fans.fan_id = fans.id
-                GROUP BY stories.id;  -- 按故事分组
-            """)
-            stories = await cur.fetchall()
+async def fetch_unique_genres(conn):
+    cursor = await conn.execute("SELECT DISTINCT genre FROM songs")
+    rows = await cursor.fetchall()
+    await cursor.close()
+    return [row["genre"] for row in rows]
 
-            # 解析 fans_info 字段
-            for story in stories:
-                if story['fans_info']:
-                    fans = []
-                    for fan_info in story['fans_info'].split(';'):
-                        fan_id, name, bili_name, bili_face = fan_info.split('|')
-                        fans.append({
-                            'fan_id': fan_id,
-                            'name': name,
-                            'bili_name': bili_name,
-                            'bili_face': bili_face
-                        })
-                    story['fans'] = fans
-                else:
-                    story['fans'] = []
 
-                # 替换 <img> 标签为 [图片]
-                story['content'] = re.sub(r'<img[^>]*>', '[图片]', story['content'])
-    return stories
+async def add_song(conn, name, artist, language, genre, url):
+    await conn.execute(
+        "INSERT INTO songs (name, artist, language, genre, url) VALUES (?, ?, ?, ?, ?)",
+        (name, artist, language, genre, url),
+    )
+    await conn.commit()
 
-async def fetch_fans_rank(pool):
-    """获取粉丝排行榜（按参与的故事数量排序，支持共享排名，过滤点数为 0 的粉丝）"""
-    async with pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("""
-                SELECT 
-                    fans.id AS fan_id,
-                    fans.name,
-                    fans.bili_name,
-                    fans.bili_face,
-                    COUNT(story_fans.story_id) AS saint_points  -- 计算圣人点数（参与的故事数量）
-                FROM fans
-                LEFT JOIN story_fans ON fans.id = story_fans.fan_id
-                GROUP BY fans.id
-                HAVING saint_points > 0  -- 过滤掉圣人点数为 0 的粉丝
-                ORDER BY saint_points DESC;  -- 按圣人点数排序
-            """)
-            fans_rank = await cur.fetchall()
 
-            # 计算排名（支持共享排名）
-            ranked_fans = []
-            previous_points = None
-            rank = 0
-            skip = 0  # 用于跳过排名
-            for fan in fans_rank:
-                if fan['saint_points'] != previous_points:
-                    rank += 1 + skip
-                    skip = 0
-                else:
-                    skip += 1  # 如果点数相同，跳过下一个排名
-                fan['rank'] = rank
-                ranked_fans.append(fan)
-                previous_points = fan['saint_points']
-    return ranked_fans
+async def update_song(conn, song_id, name, artist, language, genre, url):
+    await conn.execute(
+        """
+        UPDATE songs
+        SET name = ?, artist = ?, language = ?, genre = ?, url = ?
+        WHERE id = ?
+        """,
+        (name, artist, language, genre, url, song_id),
+    )
+    await conn.commit()
 
-# 新增路由处理函数
-async def history(request):
-    """垂名青史列表页"""
-    pool = request.app['db_pool']
-    stories = await fetch_stories(pool)
-    return aiohttp_jinja2.render_template('history.html', request, {'stories': stories})
 
-async def rank(request):
-    """圣人排行榜页"""
-    pool = request.app['db_pool']
-    fans_rank = await fetch_fans_rank(pool)
-    return aiohttp_jinja2.render_template('rank.html', request, {'fans_rank': fans_rank})
+async def delete_song(conn, song_id):
+    await conn.execute("DELETE FROM songs WHERE id = ?", (song_id,))
+    await conn.commit()
 
-async def story_detail(request):
-    """故事详情页"""
-    pool = request.app['db_pool']
-    story_id = request.match_info['id']
-    story = await fetch_story_by_id(pool, story_id)
-    if not story:
-        raise web.HTTPNotFound(text="故事不存在")
-    return aiohttp_jinja2.render_template('story.html', request, {'story': story})
 
-async def fetch_story_by_id(pool, story_id):
-    """根据故事 ID 获取单个故事的详细信息"""
-    async with pool.acquire() as conn:
-        async with conn.cursor(aiomysql.DictCursor) as cur:
-            await cur.execute("""
-                SELECT 
-                    stories.id AS story_id,
-                    stories.title,
-                    stories.content,
-                    GROUP_CONCAT(
-                        CONCAT(
-                            fans.id, '|',  -- 粉丝 ID
-                            fans.name, '|',  -- 粉丝名字
-                            fans.bili_name, '|',  -- 粉丝 B 站昵称
-                            fans.bili_face  -- 粉丝头像链接
-                        ) SEPARATOR ';'
-                    ) AS fans_info  -- 将多个粉丝的信息聚合到一个字段中
-                FROM stories
-                JOIN story_fans ON stories.id = story_fans.story_id
-                JOIN fans ON story_fans.fan_id = fans.id
-                WHERE stories.id = %s
-                GROUP BY stories.id;  -- 按故事分组
-            """, (story_id,))
-            story = await cur.fetchone()
+async def backup_songs(conn, dest_path):
+    songs = await fetch_songs(conn)
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+    with open(dest_path, "w", encoding="utf-8") as f:
+        json.dump(songs, f, ensure_ascii=False, indent=2)
+    return dest_path
 
-            # 解析 fans_info 字段
-            if story and story['fans_info']:
-                fans = []
-                for fan_info in story['fans_info'].split(';'):
-                    fan_id, name, bili_name, bili_face = fan_info.split('|')
-                    fans.append({
-                        'fan_id': fan_id,
-                        'name': name,
-                        'bili_name': bili_name,
-                        'bili_face': bili_face
-                    })
-                story['fans'] = fans
-            else:
-                story['fans'] = []
-    return story
+
+def require_admin(request):
+    token = request.app["config"].admin_token()
+    if not token:
+        return True
+    provided = request.headers.get("X-Admin-Token") or request.query.get("token")
+    if provided and provided == token:
+        return True
+    raise web.HTTPUnauthorized(text="Unauthorized")
+
 
 async def index(request):
-    """Handles the index route."""
-    pool = request.app['db_pool']
-    songs = await fetch_songs(pool)  # 获取并排序所有歌曲
-    languages = await fetch_unique_languages(pool)  # 获取唯一的语言列表
-    genres = await fetch_unique_genres(pool)  # 获取唯一的风格列表
-    return aiohttp_jinja2.render_template('index.html', request, {
-        'songs': songs,
-        'languages': languages,
-        'genres': genres
-    })
+    conn = request.app["db_conn"]
+    songs = await fetch_songs(conn)
+    languages = await fetch_unique_languages(conn)
+    genres = await fetch_unique_genres(conn)
+    return aiohttp_jinja2.render_template(
+        "index.html",
+        request,
+        {"songs": songs, "languages": languages, "genres": genres},
+    )
+
 
 async def proxy_image(request):
-    # 获取外部图片的 URL
-    image_url = request.query.get('url')
+    image_url = request.query.get("url")
     if not image_url:
         raise web.HTTPBadRequest(text="Missing 'url' parameter")
-
-    # 设置 Referer 头（如果需要）
-    headers = {
-        'Referer': 'https://www.bilibili.com'  # 设置为 B 站的域名
-    }
-
-    # 发起请求获取图片
+    headers = {"Referer": "https://www.bilibili.com"}
     async with aiohttp.ClientSession() as session:
         async with session.get(image_url, headers=headers) as response:
             if response.status == 200:
-                # 返回图片内容
                 return web.Response(
-                    body=await response.read(),
-                    content_type=response.headers['Content-Type']
+                    body=await response.read(), content_type=response.headers["Content-Type"]
                 )
-            else:
-                raise web.HTTPNotFound(text="Image not found")
+            raise web.HTTPNotFound(text="Image not found")
+
+
+async def admin_page(request):
+    require_admin(request)
+    conn = request.app["db_conn"]
+    songs = await fetch_songs(conn)
+    return aiohttp_jinja2.render_template(
+        "admin.html",
+        request,
+        {"songs": songs, "message": request.query.get("message", ""), "token": request.query.get("token", "")},
+    )
+
+
+async def admin_action(request):
+    conn = request.app["db_conn"]
+    form = await request.post()
+    provided_token = None
+    token_cfg = request.app["config"].admin_token()
+    if token_cfg:
+        provided_token = (
+            request.headers.get("X-Admin-Token")
+            or request.query.get("token")
+            or form.get("token")
+        )
+        if provided_token != token_cfg:
+            raise web.HTTPUnauthorized(text="Unauthorized")
+    action = form.get("action")
+    message = ""
+    try:
+        if action == "song_new":
+            name = form.get("song_name", "").strip()
+            artist = form.get("artist", "").strip()
+            language = form.get("language", "").strip()
+            genre = form.get("genre", "").strip()
+            url = form.get("url", "").strip() or "-"
+            await add_song(conn, name, artist, language, genre, url)
+            message = "歌曲已添加"
+        elif action == "song_update":
+            song_id = int(form.get("song_id", 0))
+            name = form.get("song_name", "").strip()
+            artist = form.get("artist", "").strip()
+            language = form.get("language", "").strip()
+            genre = form.get("genre", "").strip()
+            url = form.get("url", "").strip() or "-"
+            await update_song(conn, song_id, name, artist, language, genre, url)
+            message = "歌曲已更新"
+        elif action == "song_delete":
+            song_id = int(form.get("song_id", 0))
+            await delete_song(conn, song_id)
+            message = "歌曲已删除"
+        elif action == "backup":
+            dest = os.path.join("backup", "songs_backup.json")
+            saved = await backup_songs(conn, dest)
+            message = f"备份已生成: {saved}"
+        else:
+            message = "未知操作"
+    except Exception as exc:
+        message = f"操作失败: {exc}"
+
+    params = []
+    if provided_token:
+        params.append(f"token={quote(provided_token)}")
+    params.append(f"message={quote(message)}")
+    return web.HTTPFound(location="/admin?" + "&".join(params))
+
 
 async def init_app():
-    """Initializes and returns the web application."""
     app = web.Application()
-    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("templates"))
 
-    # 配置静态文件路由
-    app.router.add_static('/static/', path='static', name='static')
+    app.router.add_static("/static/", path="static", name="static")
+    app.router.add_get("/proxy-image", proxy_image)
 
-    # 添加代理路由
-    app.router.add_get('/proxy-image', proxy_image)
+    config = Config("config.ini")
+    db_conn = await create_db_connection(config.db_path())
+    app["db_conn"] = db_conn
+    app["config"] = config
 
-    config = Config('config.ini')
-    loop = asyncio.get_running_loop()
-    db_pool = await create_db_pool(loop, **config.db_config())
-    app['db_pool'] = db_pool
-    app['config'] = config
+    app.router.add_get("/", index)
+    app.router.add_get("/admin", admin_page)
+    app.router.add_post("/admin/action", admin_action)
 
-    # 路由
-    app.router.add_get('/', index)
-    app.router.add_get('/history', history)  # 垂名青史列表页
-    app.router.add_get('/history/{id}', story_detail)  # 故事详情页
-    app.router.add_get('/rank', rank)  # 圣人排行榜页
+    async def close_db(app):
+        await app["db_conn"].close()
 
+    app.on_cleanup.append(close_db)
     return app
 
+
 if __name__ == "__main__":
-    port = Config('config.ini').server_port()
-    app = init_app()
-    web.run_app(app, port=port)
+    port = Config("config.ini").server_port()
+    web.run_app(init_app(), port=port)

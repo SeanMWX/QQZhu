@@ -1,11 +1,11 @@
 DROP TABLE IF EXISTS fans;
 
 -- 创建 fans 表
-CREATE TABLE fans (
-    id BIGINT PRIMARY KEY,  -- 使用 BIGINT 类型
-    name VARCHAR(255) NOT NULL,
-    bili_name VARCHAR(255),  -- 粉丝的 B 站昵称
-    bili_face VARCHAR(255)   -- 粉丝的头像链接
+CREATE TABLE IF NOT EXISTS fans (
+    id INTEGER PRIMARY KEY,  -- 使用整型 ID
+    name TEXT NOT NULL,
+    bili_name TEXT,  -- 粉丝的 B 站昵称
+    bili_face TEXT   -- 粉丝的头像链接
 );
 
 

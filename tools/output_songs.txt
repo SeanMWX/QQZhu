@@ -1,13 +1,13 @@
 DROP TABLE IF EXISTS songs;
 
 -- 创建 songs 表
-CREATE TABLE songs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,  -- 歌名
-    artist VARCHAR(255) NOT NULL,  -- 歌手
-    language VARCHAR(50),  -- 语言
-    genre VARCHAR(50),  -- 风格
-    url VARCHAR(255) NOT NULL  -- 歌曲的URL
+CREATE TABLE IF NOT EXISTS songs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,  -- 歌名
+    artist TEXT NOT NULL,  -- 歌手
+    language TEXT,  -- 语言
+    genre TEXT,  -- 风格
+    url TEXT NOT NULL  -- 歌曲的 URL
 );
 
 

@@ -1,40 +1,42 @@
 import pandas as pd
 
 # 读取 Excel 文件
-df = pd.read_excel('input.xlsx', sheet_name='粉丝') 
+df = pd.read_excel('input.xlsx', sheet_name='粉丝')
 
 # 打印所有列名
 print(df.columns)
 
-# 初始化 SQL 语句
+# 初始 SQL 语句（SQLite 版本）
 sql_drop = "DROP TABLE IF EXISTS fans;"
 sql_create = """-- 创建 fans 表
-CREATE TABLE fans (
-    id BIGINT PRIMARY KEY,  -- 使用 BIGINT 类型
-    name VARCHAR(255) NOT NULL,
-    bili_name VARCHAR(255),  -- 粉丝的 B 站昵称
-    bili_face VARCHAR(255)   -- 粉丝的头像链接
+CREATE TABLE IF NOT EXISTS fans (
+    id INTEGER PRIMARY KEY,  -- 使用整型 ID
+    name TEXT NOT NULL,
+    bili_name TEXT,  -- 粉丝的 B 站昵称
+    bili_face TEXT   -- 粉丝的头像链接
 );
 """
 sql_insert = "INSERT INTO fans (id, name, bili_name, bili_face) VALUES\n"
 
+
+def esc(val):
+    """简单转义单引号，避免生成的 SQL 语句报错。"""
+    return str(val).replace("'", "''")
+
+
 # 遍历每一行数据
-for index, row in df.iterrows():
-    id = row['id']
-    name = row['昵称（name）']
+for _, row in df.iterrows():
+    fan_id = row['id']
+    name = esc(row['昵称（name）'])
     bili_name = row['B站名字（bili_name）']
     bili_face = row['B站图标（bili_face）']
 
-    # 处理 B站名字 为空的情况
     if pd.isna(bili_name):
         bili_name = '-'
-    
-    # 处理 B站图标 为空的情况
     if pd.isna(bili_face):
         bili_face = '-'
-    
-    # 拼接 SQL 语句
-    sql_insert += f"({id}, '{name}', '{bili_name}', '{bili_face}'),\n"
+
+    sql_insert += f"({fan_id}, '{name}', '{esc(bili_name)}', '{esc(bili_face)}'),\n"
 
 # 去掉最后一个逗号和换行符，并加上分号
 sql_insert = sql_insert.rstrip(",\n") + ";"
@@ -43,4 +45,4 @@ sql_insert = sql_insert.rstrip(",\n") + ";"
 with open('output_fans.txt', 'w', encoding='utf-8') as file:
     file.write(sql_drop + "\n\n" + sql_create + "\n\n" + sql_insert)
 
-print("SQL 语句已成功写入 output_fans.txt 文件！")
+print("SQL 语句已成功写入 output_fans.txt 文件。")
