@@ -8,6 +8,7 @@ import aiosqlite
 import json
 import os
 import time
+import io
 from urllib.parse import quote
 from pypinyin import pinyin, Style
 
@@ -201,6 +202,41 @@ async def restore_songs_from_data(conn, songs):
     return len(songs)
 
 
+def parse_backup_xlsx(data: bytes):
+    try:
+        from openpyxl import load_workbook
+    except ImportError:
+        raise ImportError("未安装 openpyxl，无法解析 xlsx，请先安装 openpyxl")
+
+    wb = load_workbook(io.BytesIO(data))
+    ws = wb.active
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        return []
+    header = [str(h).strip() if h is not None else "" for h in rows[0]]
+    required = ["歌名", "歌手", "语言", "风格", "url"]
+    if header[:5] != required:
+        raise ValueError(f"xlsx 表头需为：{' | '.join(required)}")
+    songs = []
+    for row in rows[1:]:
+        if row is None:
+            continue
+        vals = list(row) + [""] * (5 - len(row))
+        name, artist, language, genre, url = ["" if v is None else str(v) for v in vals[:5]]
+        if not name and not artist:
+            continue
+        songs.append(
+            {
+                "name": name,
+                "artist": artist,
+                "language": language,
+                "genre": genre,
+                "url": url or "-",
+            }
+        )
+    return songs
+
+
 def require_admin(request, form=None):
     """Check admin token via header/query/form/cookie; redirect to login if missing."""
     token_cfg = request.app["config"].admin_token()
@@ -328,8 +364,15 @@ async def admin_action(request):
             file_field = form.get("backup_file")
             try:
                 if file_field and hasattr(file_field, "file") and file_field.filename:
-                    content = file_field.file.read().decode("utf-8")
-                    songs = parse_backup_json(content)
+                    filename = file_field.filename.lower()
+                    if filename.endswith(".json"):
+                        content = file_field.file.read().decode("utf-8")
+                        songs = parse_backup_json(content)
+                    elif filename.endswith(".xlsx"):
+                        content = file_field.file.read()
+                        songs = parse_backup_xlsx(content)
+                    else:
+                        raise ValueError("仅支持 .json 或 .xlsx 备份文件")
                     count = await restore_songs_from_data(conn, songs)
                     message = f"已从上传的备份恢复 {count} 首歌曲"
                 else:
