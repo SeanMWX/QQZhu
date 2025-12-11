@@ -134,6 +134,26 @@ async def csrf_middleware(request, handler):
     return response
 
 
+@web.middleware
+async def security_headers_middleware(request, handler):
+    response = await handler(request)
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    # 轻量 CSP：允许自身与 https 资源，行内样式/脚本被现有页面使用，图片放宽到 https/data
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self' https: data:; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
+        "img-src 'self' https: data:; "
+        "font-src 'self' https://cdnjs.cloudflare.com data:; "
+        "connect-src 'self' https:; "
+        "frame-ancestors 'self';"
+    )
+    return response
+
+
 async def create_db_connection(db_path):
     # Ensure the database directory exists before connecting
     db_dir = os.path.dirname(db_path)
@@ -628,7 +648,7 @@ async def admin_action(request):
                 raise ValueError("两次输入的 token 不一致")
             update_env_var("QQZHU_ADMIN_TOKEN", new_token)
             request.app["config"].env_admin_token = new_token
-            message = "admin_token 已更新，请重新登录（值已写入 .env）"
+            message = "admin_token 已更新，请重新登录"
             if wants_json(request):
                 return web.json_response({"ok": True, "action": "update_admin_token", "message": message})
         else:
@@ -645,7 +665,10 @@ async def admin_action(request):
 
 
 async def init_app():
-    app = web.Application(client_max_size=10 * 1024 * 1024, middlewares=[csrf_middleware])
+    app = web.Application(
+        client_max_size=10 * 1024 * 1024,
+        middlewares=[csrf_middleware, security_headers_middleware],
+    )
     aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader("templates"))
 
     app.router.add_static("/static/", path="static", name="static")
