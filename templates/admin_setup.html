@@ -44,7 +44,11 @@
             <input type="hidden" name="next" value="{{ next }}">
             <div class="field">
                 <label for="new_token">新的 Token</label>
-                <input id="new_token" name="new_token" type="password" required placeholder="请输入新的后台口令">
+                <input id="new_token" name="new_token" type="password" required placeholder="请输入新的后台口令" autocomplete="new-password">
+            </div>
+            <div class="field">
+                <label for="confirm_token">确认 Token</label>
+                <input id="confirm_token" name="confirm_token" type="password" required placeholder="请再次输入后台口令" autocomplete="new-password">
             </div>
             <button class="btn" type="submit">保存并进入后台</button>
         </form>

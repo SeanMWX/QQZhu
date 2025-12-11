@@ -376,12 +376,19 @@ async def admin_setup_post(request):
         raise web.HTTPFound(location="/admin/login")
     form = await request.post()
     new_token = form.get("new_token", "").strip()
+    confirm_token = form.get("confirm_token", "").strip()
     next_url = form.get("next") or "/admin"
     if not new_token:
         return aiohttp_jinja2.render_template(
             "admin_setup.html",
             request,
             {"next": next_url, "message": "Token 不能为空"},
+        )
+    if new_token != confirm_token:
+        return aiohttp_jinja2.render_template(
+            "admin_setup.html",
+            request,
+            {"next": next_url, "message": "两次输入的 Token 不一致"},
         )
     cfg = request.app["config"].config
     if not cfg.has_section("server"):
@@ -505,8 +512,11 @@ async def admin_action(request):
             message = "站点信息已更新"
         elif action == "update_admin_token":
             new_token = form.get("new_token", "").strip()
+            confirm_token = form.get("confirm_token", "").strip()
             if not new_token:
                 raise ValueError("新 token 不能为空")
+            if new_token != confirm_token:
+                raise ValueError("两次输入的 token 不一致")
             cfg = request.app["config"].config
             cfg.set("server", "admin_token", new_token)
             with open("config.ini", "w", encoding="utf-8") as f:

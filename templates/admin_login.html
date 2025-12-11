@@ -35,7 +35,7 @@
             text-align: center;
         }
         label { display: block; margin: 10px 0 6px; font-weight: bold; }
-        input[type="text"] {
+        input[type="text"], input[type="password"] {
             width: 100%;
             padding: 10px;
             border-radius: 8px;
@@ -72,7 +72,7 @@
         <form method="post" action="/admin/login">
             <input type="hidden" name="next" value="{{ next }}">
             <label for="token">Admin Token</label>
-            <input type="text" id="token" name="token" required>
+            <input type="password" id="token" name="token" required autocomplete="current-password">
             <button type="submit"><i class="fa fa-door-open"></i> 登录</button>
         </form>
         {% if message %}

@@ -315,11 +315,12 @@
 
         <div class="panel">
             <h2>安全</h2>
-            <form method="post" action="/admin/action" class="backup-box" onsubmit="return confirm('确定修改 admin_token 吗？修改后需重新登录');">
+            <form method="post" action="/admin/action" class="backup-box" onsubmit="return handleTokenUpdate(event);">
                 <input type="hidden" name="action" value="update_admin_token">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div style="flex:1; min-width:240px;">修改后台 admin_token（将写入 config.ini）。</div>
-                <input type="text" name="new_token" placeholder="新 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;">
+                <input type="password" name="new_token" placeholder="新 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password">
+                <input type="password" name="confirm_token" placeholder="确认 admin_token" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px;" autocomplete="new-password">
                 <button type="submit" style="background:#e74c3c;"><i class="fa fa-key"></i> 更新</button>
             </form>
         </div>
@@ -345,6 +346,18 @@
                 messageBox.textContent = text || '';
                 messageBox.style.display = text ? 'block' : 'none';
             }
+        }
+
+        function handleTokenUpdate(e) {
+            const form = e.target;
+            const newToken = form.querySelector('input[name="new_token"]')?.value || '';
+            const confirmToken = form.querySelector('input[name="confirm_token"]')?.value || '';
+            if (newToken !== confirmToken) {
+                alert('两次输入的 token 不一致');
+                e.preventDefault();
+                return false;
+            }
+            return confirm('确定修改 admin_token 吗？修改后需重新登录');
         }
 
         // Async song actions
