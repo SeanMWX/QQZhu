@@ -548,6 +548,7 @@ async def init_app():
 
     app.router.add_static("/static/", path="static", name="static")
     app.router.add_get("/proxy-image", proxy_image)
+    app.router.add_get("/healthz", lambda request: web.Response(text="ok"))
 
     config = Config("config.ini")
     db_conn = await create_db_connection(config.db_path())

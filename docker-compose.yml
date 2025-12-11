@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  qqzhu:
+    build: .
+    container_name: qqzhu
+    ports:
+      - "13897:8080"
+    environment:
+      QQZHU_PORT: 8080
+      QQZHU_DB_PATH: /app/instance/qqzhu.db
+    volumes:
+      - ./instance:/app/instance
+      - ./static/uploads:/app/static/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys;sys.exit(0 if urllib.request.urlopen('http://localhost:8080/healthz').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
