@@ -245,12 +245,19 @@
         </div>
 
         <div class="panel">
-            <h2>备份歌单</h2>
-            <form method="post" action="/admin/action" class="backup-box">
+            <h2>备份 / 恢复</h2>
+            <form method="post" action="/admin/action" class="backup-box" style="margin-bottom:10px;">
                 <input type="hidden" name="action" value="backup">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div>生成 <code>backup/songs_backup.json</code>（UTF-8）。</div>
                 <button type="submit"><i class="fa fa-download"></i> 备份</button>
+            </form>
+            <form method="post" action="/admin/action" class="backup-box" enctype="multipart/form-data" onsubmit="return confirm('将用备份覆盖当前歌单，确认吗？');">
+                <input type="hidden" name="action" value="restore_backup">
+                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+                <div>上传备份（JSON），或留空使用 <code>backup/songs_backup.json</code> 恢复，覆盖当前歌单。</div>
+                <input type="file" name="backup_file" accept=".json">
+                <button type="submit" style="background:#e67e22;"><i class="fa fa-upload"></i> 恢复</button>
             </form>
         </div>
     </div>

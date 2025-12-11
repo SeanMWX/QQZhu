@@ -172,6 +172,35 @@ async def backup_songs(conn, dest_path):
     return dest_path
 
 
+def parse_backup_json(text: str):
+    data = json.loads(text)
+    if not isinstance(data, list):
+        raise ValueError("备份格式错误：根节点应为列表")
+    for item in data:
+        if not isinstance(item, dict):
+            raise ValueError("备份格式错误：列表元素应为对象")
+        for key in ("name", "artist", "language", "genre", "url"):
+            if key not in item:
+                raise ValueError(f"备份缺少必要字段: {key}")
+    return data
+
+
+async def restore_songs_from_data(conn, songs):
+    # 清空并恢复
+    await conn.execute("DELETE FROM songs")
+    for s in songs:
+        await add_song(
+            conn,
+            s.get("name", ""),
+            s.get("artist", ""),
+            s.get("language", ""),
+            s.get("genre", ""),
+            s.get("url", "-"),
+        )
+    await conn.commit()
+    return len(songs)
+
+
 def require_admin(request, form=None):
     """Check admin token via header/query/form/cookie; redirect to login if missing."""
     token_cfg = request.app["config"].admin_token()
@@ -295,6 +324,25 @@ async def admin_action(request):
             dest = os.path.join("backup", "songs_backup.json")
             saved = await backup_songs(conn, dest)
             message = f"备份已生成: {saved}"
+        elif action == "restore_backup":
+            file_field = form.get("backup_file")
+            try:
+                if file_field and hasattr(file_field, "file") and file_field.filename:
+                    content = file_field.file.read().decode("utf-8")
+                    songs = parse_backup_json(content)
+                    count = await restore_songs_from_data(conn, songs)
+                    message = f"已从上传的备份恢复 {count} 首歌曲"
+                else:
+                    src = os.path.join("backup", "songs_backup.json")
+                    if not os.path.exists(src):
+                        raise FileNotFoundError(f"{src} 不存在")
+                    with open(src, "r", encoding="utf-8") as f:
+                        content = f.read()
+                    songs = parse_backup_json(content)
+                    count = await restore_songs_from_data(conn, songs)
+                    message = f"已从本地备份恢复 {count} 首歌曲"
+            except Exception as exc:
+                message = f"恢复失败: {exc}"
         elif action == "settings":
             current_settings = await get_settings(conn)
             bg_file = form.get("background_file")
