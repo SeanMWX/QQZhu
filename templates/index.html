@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-image: url('{{ settings.background_url }}'); /* 背景图 */
+            background-image: linear-gradient(180deg, rgba(0,0,0,0.35), rgba(0,0,0,0.2)), url('{{ settings.background_url }}'); /* 背景加遮罩提升对比 */
             background-size: cover;
             background-position: center;
             background-attachment: fixed; /* 背景图固定 */
@@ -30,9 +30,11 @@
             padding: 15px 20px;
             display: flex;
             justify-content: center;
+            gap: 12px;
             position: sticky;
             top: 0;
             z-index: 1000;
+            backdrop-filter: blur(8px);
         }
         .navbar a {
             color: #888; /* 浅灰色文字 */
@@ -219,6 +221,59 @@
         .song-list.hide-cards .category {
             display: none;
         }
+        @media (max-width: 900px) {
+            .navbar a { font-size: 16px; margin: 0 12px; padding: 8px 10px; }
+        }
+        @media (max-width: 768px) {
+            body { background-attachment: scroll; }
+            .navbar { flex-wrap: wrap; padding: 12px; gap: 8px; }
+            .navbar a { font-size: 15px; margin: 4px 8px; }
+            .intro {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                padding: 16px;
+            }
+            .intro img { width: 120px; height: 120px; }
+            .song-list { padding: 14px; width: 94%; }
+            .filter-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+            .filter-bar input,
+            .filter-bar select,
+            .filter-bar button { width: 100%; min-width: 0; font-size: 15px; }
+            .song-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+            .song-card { padding: 12px; }
+            .song-list-table thead { display: none; }
+            .song-list-table { display: block; }
+            .song-list-table tbody {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .song-list-table tr {
+                display: grid;
+                grid-template-columns: 1fr;
+                padding: 12px;
+                background: rgba(255, 255, 255, 0.95);
+                border-radius: 10px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                border: 1px solid #eee;
+            }
+            .song-list-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 0;
+                border-bottom: none;
+                font-size: 14px;
+                gap: 10px;
+            }
+            .song-list-table td::before {
+                content: attr(data-label);
+                color: #666;
+                font-weight: 600;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -295,11 +350,11 @@
             <tbody>
                 {% for song in songs %}
                 <tr data-song-name="{{ song.name }}">
-                    <td>{{ song.name }}</td>
-                    <td>{{ song.artist }}</td>
-                    <td>{{ song.language }}</td>
-                    <td>{{ song.genre }}</td>
-                    <td>
+                    <td data-label="歌名">{{ song.name }}</td>
+                    <td data-label="歌手">{{ song.artist }}</td>
+                    <td data-label="语言">{{ song.language }}</td>
+                    <td data-label="风格">{{ song.genre }}</td>
+                    <td data-label="操作">
                         {% if song.url != '-' %}
                         <a href="{{ song.url }}" target="_blank"><i class="fas fa-play"></i> 播放</a>
                         {% endif %}
