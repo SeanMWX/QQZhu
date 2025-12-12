@@ -393,17 +393,21 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div style="flex:1; min-width:260px;">上传完整背景图，填写 content_start / end_start，按当前歌曲名排序生成长图。</div>
-                <div class="backup-actions">
+                <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
                     <label class="file-input">
                         <span class="btn"><i class="fa fa-file"></i> <span id="gen-file-label">选择背景</span></span>
                         <input type="file" name="bg_image" accept="image/*" id="gen-bg-input" required>
                     </label>
                     <input type="number" name="content_start" placeholder="content_start" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
                     <input type="number" name="end_start" placeholder="end_start" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
-                    <input type="number" name="font_size" placeholder="字体大小(默认38)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
-                    <input type="number" name="line_height" placeholder="行高(默认内容高或80)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:150px;">
-                    <input type="number" name="max_chars_per_line" placeholder="每行字符(默认35)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:140px;">
-                    <input type="number" name="max_songs_per_line" placeholder="每行数量(默认6)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:140px;">
+                </div>
+                <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
+                    <input type="number" name="font_size" placeholder="字体大小(默认38)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                    <input type="number" name="line_height" placeholder="行高(默认内容高/80)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                    <input type="number" name="max_chars_per_line" placeholder="每行字符(默认35)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                    <input type="number" name="max_songs_per_line" placeholder="每行数量(默认6)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                </div>
+                <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
                     <button type="submit" style="background:#6c7ae0;"><i class="fa fa-image"></i> 生成长图</button>
                 </div>
             </form>
@@ -426,10 +430,14 @@
                     <input type="number" name="rect_y1" placeholder="y1" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
                     <input type="number" name="rect_x2" placeholder="x2" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
                     <input type="number" name="rect_y2" placeholder="y2" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
-                    <input type="number" name="font_size" placeholder="字体大小(默认38)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
-                    <input type="number" name="line_height" placeholder="行高(默认80)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
-                    <input type="number" name="max_chars_per_line" placeholder="每行字符(默认35)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:140px;">
-                    <input type="number" name="max_songs_per_line" placeholder="每行数量(默认6)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:140px;">
+                </div>
+                <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
+                    <input type="number" name="font_size" placeholder="字体大小(默认38)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                    <input type="number" name="line_height" placeholder="行高(默认80)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                    <input type="number" name="max_chars_per_line" placeholder="每行字符(默认35)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                    <input type="number" name="max_songs_per_line" placeholder="每行数量(默认6)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:170px;">
+                </div>
+                <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
                     <button type="submit" style="background:#6c7ae0;"><i class="fa fa-images"></i> 生成分页小图</button>
                 </div>
             </form>
