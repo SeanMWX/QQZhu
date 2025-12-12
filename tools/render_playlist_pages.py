@@ -29,6 +29,12 @@ def pick_font(font_path: Optional[Path], size: int) -> ImageFont.FreeTypeFont:
             return ImageFont.truetype(str(font_path), size)
         except Exception:
             pass
+    repo_font = Path("static/simsun.ttc")
+    if repo_font.exists():
+        try:
+            return ImageFont.truetype(str(repo_font), size)
+        except Exception:
+            pass
     try_fonts = [
         "msyhl.ttc",
         "SourceHanSansSC-Light.otf",

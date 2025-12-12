@@ -219,21 +219,38 @@ def save_file_field(file_field, prefix):
 
 def pick_font(font_path=None, size=38):
     """Pick a font that exists on the system."""
-    if font_path and os.path.exists(font_path):
+    env_font = os.environ.get("QQZHU_FONT_PATH")
+    candidates = []
+    if font_path:
+        candidates.append(font_path)
+    if env_font:
+        candidates.append(env_font)
+    # Prefer repo-local font
+    candidates.append(os.path.join("static", "simsun.ttc"))
+    # Common Noto paths (Debian/Ubuntu font package)
+    candidates.extend(
+        [
+            "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+            "/usr/share/fonts/truetype/noto/NotoSansSC-Regular.otf",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        ]
+    )
+    # Legacy fallbacks
+    candidates.extend(
+        [
+            "msyhl.ttc",
+            "SourceHanSansSC-Light.otf",
+            "msyh.ttc",
+            "simsun.ttc",
+            "STHeiti Light.ttc",
+        ]
+    )
+
+    for path in candidates:
+        if not path or not os.path.exists(path):
+            continue
         try:
-            return ImageFont.truetype(font_path, size)
-        except Exception:
-            pass
-    try_fonts = [
-        "msyhl.ttc",
-        "SourceHanSansSC-Light.otf",
-        "msyh.ttc",
-        "simsun.ttc",
-        "STHeiti Light.ttc",
-    ]
-    for tf in try_fonts:
-        try:
-            return ImageFont.truetype(tf, size)
+            return ImageFont.truetype(path, size)
         except Exception:
             continue
     font = ImageFont.load_default()
