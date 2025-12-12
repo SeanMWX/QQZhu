@@ -664,6 +664,16 @@ async def admin_action(request):
     return web.HTTPFound(location="/admin?" + "&".join(params) + "#songs")
 
 
+async def admin_download_backup(request):
+    """Generate and send latest backup file for download."""
+    _ = require_admin(request)
+    conn = request.app["db_conn"]
+    dest = os.path.join("backup", "songs_backup.json")
+    saved = await backup_songs(conn, dest)
+    headers = {"Content-Disposition": 'attachment; filename="songs_backup.json"'}
+    return web.FileResponse(path=saved, headers=headers)
+
+
 async def init_app():
     app = web.Application(
         client_max_size=10 * 1024 * 1024,
@@ -688,6 +698,7 @@ async def init_app():
     app.router.add_post("/admin/setup", admin_setup_post)
     app.router.add_get("/admin", admin_page)
     app.router.add_post("/admin/action", admin_action)
+    app.router.add_get("/admin/download-backup", admin_download_backup)
 
     async def close_db(app):
         await app["db_conn"].close()

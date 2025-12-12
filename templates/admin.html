@@ -172,6 +172,38 @@
             font-size: 13px;
             color: #555;
         }
+        .backup-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .backup-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            background: #eef2ff;
+            color: #3748a0;
+            border: 1px solid #d0d6f5;
+            text-decoration: none;
+            font-size: 13px;
+            transition: background-color 0.2s ease;
+            min-width: 143px;
+            height: 20px;
+            line-height: 20px;
+            font-weight: 600;
+            justify-content: center;
+        }
+        .btn-secondary:hover { background: #e4e8ff; }
 
         @media (max-width: 768px) {
             .container { padding: 16px; }
@@ -323,23 +355,30 @@
 
         <div class="panel">
             <h2>备份 / 恢复</h2>
-            <form method="post" action="/admin/action" class="backup-box" style="margin-bottom:10px;">
+            <form method="post" action="/admin/action" class="backup-row" style="margin-bottom:10px;">
                 <input type="hidden" name="action" value="backup">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div>生成 <code>backup/songs_backup.json</code>（UTF-8）。<a class="info-link" href="#" onclick="toggleBackupHelp(); return false;">格式说明</a></div>
-                <button type="submit"><i class="fa fa-download"></i> 备份</button>
+                <div class="backup-actions">
+                    <a class="btn-secondary" href="/admin/download-backup{% if token %}?token={{ token }}{% endif %}">
+                        <i class="fa fa-download"></i> 下载备份
+                    </a>
+                    <button type="submit"><i class="fa fa-download"></i> 备份</button>
+                </div>
             </form>
-            <form method="post" action="/admin/action" class="backup-box" enctype="multipart/form-data" onsubmit="return confirm('将用备份覆盖当前歌单，确认吗？');">
+            <form method="post" action="/admin/action" class="backup-row" enctype="multipart/form-data" onsubmit="return confirm('将用备份覆盖当前歌单，确认吗？');">
                 <input type="hidden" name="action" value="restore_backup">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
                 <div style="flex:1; min-width:240px;">上传备份（JSON 或 XLSX），或留空使用 <code>backup/songs_backup.json</code> 恢复，覆盖当前歌单。</div>
-                <label class="file-input">
-                    <span class="btn"><i class="fa fa-file"></i> <span id="file-label">选择文件</span></span>
-                    <input type="file" name="backup_file" accept=".json,.xlsx" id="backup-file-input">
-                </label>
-                <button type="submit" style="background:#e67e22;"><i class="fa fa-upload"></i> 恢复</button>
+                <div class="backup-actions">
+                    <label class="file-input">
+                        <span class="btn"><i class="fa fa-file"></i> <span id="file-label">选择文件</span></span>
+                        <input type="file" name="backup_file" accept=".json,.xlsx" id="backup-file-input">
+                    </label>
+                    <button type="submit" style="background:#e67e22;"><i class="fa fa-upload"></i> 恢复</button>
+                </div>
             </form>
             <div id="backup-help" style="display:none; font-size:13px; color:#555; margin-top:8px;">
                 <strong>JSON：</strong>为后台导出的原始格式。<br/>
