@@ -771,9 +771,16 @@ async def admin_action(request):
             generated_path = generate_playlist_image_from_bg(
                 bg_field.file.read(), content_start, end_start, names, font_path=font_path
             )
-            message = f"长图已生成：{generated_path}"
             if wants_json(request):
                 return web.json_response({"ok": True, "action": "generate_playlist_image", "path": generated_path})
+            # For normal form submit, stream the generated file as download
+            fs_path = generated_path.lstrip("/\\")
+            fs_path = fs_path if os.path.isabs(fs_path) else os.path.join(os.getcwd(), fs_path)
+            if not os.path.exists(fs_path):
+                raise web.HTTPNotFound(text="生成的长图不存在")
+            filename = os.path.basename(fs_path)
+            headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+            return web.FileResponse(path=fs_path, headers=headers)
         else:
             message = "未知操作"
     except Exception as exc:
