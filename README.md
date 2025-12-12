@@ -1,5 +1,5 @@
-# QQZhu
-歌单/点歌后台（aiohttp + sqlite）。支持前台展示、后台增删改、备份/恢复、首登设置后台 token。
+# QQZhu（主播歌单）
+前端+后端（aiohttp + sqlite）。支持前台展示、后台增删改、备份/恢复、首登设置后台 token。
 
 ## 本地启动
 1) 准备环境：Python 3.10+，安装依赖
