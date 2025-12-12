@@ -10,6 +10,8 @@ import os
 import secrets
 import time
 import io
+import math
+import zipfile
 from PIL import Image, ImageDraw, ImageFont
 from urllib.parse import quote
 from pypinyin import pinyin, Style
@@ -317,6 +319,72 @@ def generate_playlist_image_from_bg(bg_bytes, content_start, end_start, names, f
     path_fs = os.path.join(output_dir, filename)
     canvas.save(path_fs, quality=95)
     return f"/static/uploads/{filename}"
+
+
+def generate_playlist_pages_from_bg(
+    bg_bytes,
+    rect,
+    names,
+    font_path=None,
+    font_size=38,
+    max_chars_per_line=35,
+    max_songs_per_line=6,
+    line_height=80,
+    output_dir="static/uploads",
+):
+    if not names:
+        raise ValueError("歌曲列表为空")
+    ensure_upload_dir()
+    img = Image.open(io.BytesIO(bg_bytes)).convert("RGB")
+    width, height = img.size
+    x1, y1, x2, y2 = rect
+    if not (0 <= x1 < x2 <= width and 0 <= y1 < y2 <= height):
+        raise ValueError("矩形范围非法")
+
+    lines = wrap_song_names(names, max_chars_per_line=max_chars_per_line, max_songs_per_line=max_songs_per_line)
+    lines_per_page = max(1, (y2 - y1) // line_height)
+    pages = math.ceil(len(lines) / lines_per_page)
+
+    sample_x = min(max(x1 + 5, 0), width - 1)
+    sample_y = min(max(y1 + 5, 0), height - 1)
+    bg_color = img.getpixel((sample_x, sample_y))
+    text_color = (30, 30, 30) if sum(bg_color) > 382 else (240, 240, 240)
+    shadow_color = (
+        (max(bg_color[0] - 30, 0), max(bg_color[1] - 30, 0), max(bg_color[2] - 30, 0))
+        if sum(bg_color) > 382
+        else (0, 0, 0)
+    )
+    font = pick_font(font_path, font_size)
+
+    ts = int(time.time())
+    saved_files = []
+    for page in range(pages):
+        start = page * lines_per_page
+        end = start + lines_per_page
+        page_lines = lines[start:end]
+        canvas = img.copy()
+        draw = ImageDraw.Draw(canvas)
+        y = y1
+        for line in page_lines:
+            text_w, text_h = draw.textsize(line, font=font)
+            text_y = y + (line_height - text_h) // 2
+            draw.text((x1 + 2, text_y + 2), line, font=font, fill=shadow_color)
+            draw.text((x1, text_y), line, font=font, fill=text_color)
+            y += line_height
+        filename = f"playlist_page_{ts}_{page+1:02d}.png"
+        path_fs = os.path.join(output_dir, filename)
+        canvas.save(path_fs, quality=95)
+        saved_files.append(path_fs)
+
+    zip_name = f"playlist_pages_{ts}.zip"
+    zip_path = os.path.join(output_dir, zip_name)
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for fpath in saved_files:
+            zf.write(fpath, arcname=os.path.basename(fpath))
+    return {
+        "zip_path": f"/static/uploads/{zip_name}",
+        "files": [f"/static/uploads/{os.path.basename(p)}" for p in saved_files],
+    }
 
 
 def wants_json(request):
@@ -778,6 +846,44 @@ async def admin_action(request):
             fs_path = fs_path if os.path.isabs(fs_path) else os.path.join(os.getcwd(), fs_path)
             if not os.path.exists(fs_path):
                 raise web.HTTPNotFound(text="生成的长图不存在")
+            filename = os.path.basename(fs_path)
+            headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
+            return web.FileResponse(path=fs_path, headers=headers)
+        elif action == "generate_playlist_pages":
+            bg_field = form.get("bg_image_small")
+            if not (bg_field and hasattr(bg_field, "file") and bg_field.filename):
+                raise ValueError("请上传背景图")
+            try:
+                x1 = int(form.get("rect_x1", 0))
+                y1 = int(form.get("rect_y1", 0))
+                x2 = int(form.get("rect_x2", 0))
+                y2 = int(form.get("rect_y2", 0))
+            except Exception:
+                raise ValueError("矩形坐标需要是整数")
+            font_size = int(form.get("font_size", 38) or 38)
+            line_height = int(form.get("line_height", 80) or 80)
+            max_chars_per_line = int(form.get("max_chars_per_line", 35) or 35)
+            max_songs_per_line = int(form.get("max_songs_per_line", 6) or 6)
+            songs_sorted = await fetch_songs_sorted(conn)
+            names = [s["name"] for s in songs_sorted]
+            font_path = form.get("font_path", "").strip() or None
+            result = generate_playlist_pages_from_bg(
+                bg_field.file.read(),
+                (x1, y1, x2, y2),
+                names,
+                font_path=font_path,
+                font_size=font_size,
+                max_chars_per_line=max_chars_per_line,
+                max_songs_per_line=max_songs_per_line,
+                line_height=line_height,
+            )
+            zip_path = result["zip_path"]
+            if wants_json(request):
+                return web.json_response({"ok": True, "action": "generate_playlist_pages", "zip_path": zip_path, "files": result["files"]})
+            fs_path = zip_path.lstrip("/\\")
+            fs_path = fs_path if os.path.isabs(fs_path) else os.path.join(os.getcwd(), fs_path)
+            if not os.path.exists(fs_path):
+                raise web.HTTPNotFound(text="生成的文件不存在")
             filename = os.path.basename(fs_path)
             headers = {"Content-Disposition": f'attachment; filename="{filename}"'}
             return web.FileResponse(path=fs_path, headers=headers)

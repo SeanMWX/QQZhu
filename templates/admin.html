@@ -407,6 +407,32 @@
         </div>
 
         <div class="panel">
+            <h2>生成歌单小图（分页）</h2>
+            <form method="post" action="/admin/action" class="backup-row" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="generate_playlist_pages">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+                <div style="flex:1; min-width:260px;">上传背景图，设置文本区域左上/右下坐标（x1,y1,x2,y2），按当前歌曲名分页生成与背景同尺寸的小图。</div>
+                <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
+                    <label class="file-input">
+                        <span class="btn"><i class="fa fa-file"></i> <span id="gen-small-file-label">选择背景</span></span>
+                        <input type="file" name="bg_image_small" accept="image/*" id="gen-small-bg-input" required>
+                    </label>
+                    <input type="number" name="rect_x1" placeholder="x1" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
+                    <input type="number" name="rect_y1" placeholder="y1" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
+                    <input type="number" name="rect_x2" placeholder="x2" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
+                    <input type="number" name="rect_y2" placeholder="y2" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:90px;">
+                    <input type="number" name="font_size" placeholder="字体大小(默认38)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
+                    <input type="number" name="line_height" placeholder="行高(默认80)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
+                    <input type="number" name="max_chars_per_line" placeholder="每行字符(默认35)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:140px;">
+                    <input type="number" name="max_songs_per_line" placeholder="每行数量(默认6)" style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:140px;">
+                    <button type="submit" style="background:#6c7ae0;"><i class="fa fa-images"></i> 生成分页小图</button>
+                </div>
+            </form>
+            <p class="tips">使用当前数据库中的歌曲名（按现有排序规则）。提交后会直接下载包含所有小图的 ZIP，也会保存到 <code>/static/uploads</code>。</p>
+        </div>
+
+        <div class="panel">
             <h2>安全</h2>
             <form method="post" action="/admin/action" class="backup-box" data-ajax="true" data-token-form="true" data-confirm="确定修改 admin_token 吗？修改后需重新登录">
                 <input type="hidden" name="action" value="update_admin_token">
@@ -434,6 +460,14 @@
             genInput.addEventListener('change', (e) => {
                 const file = e.target.files && e.target.files[0];
                 genFileLabel.textContent = file ? file.name : '选择背景';
+            });
+        }
+        const genSmallInput = document.getElementById('gen-small-bg-input');
+        const genSmallFileLabel = document.getElementById('gen-small-file-label');
+        if (genSmallInput && genSmallFileLabel) {
+            genSmallInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                genSmallFileLabel.textContent = file ? file.name : '选择背景';
             });
         }
         function toggleBackupHelp() {
