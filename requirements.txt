@@ -5,3 +5,4 @@ aiosqlite==0.20.0
 pypinyin==0.50.0
 openpyxl==3.1.5
 python-dotenv==1.0.1
+Pillow==10.4.0

@@ -387,6 +387,26 @@
         </div>
 
         <div class="panel">
+            <h2>生成歌单长图</h2>
+            <form method="post" action="/admin/action" class="backup-row" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="generate_playlist_image">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
+                <div style="flex:1; min-width:260px;">上传完整背景图，填写 content_start / end_start，按当前歌曲名排序生成长图。</div>
+                <div class="backup-actions">
+                    <label class="file-input">
+                        <span class="btn"><i class="fa fa-file"></i> <span id="gen-file-label">选择背景</span></span>
+                        <input type="file" name="bg_image" accept="image/*" id="gen-bg-input" required>
+                    </label>
+                    <input type="number" name="content_start" placeholder="content_start" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
+                    <input type="number" name="end_start" placeholder="end_start" required style="padding:8px 10px;border:1px solid #ccc;border-radius:6px; width:130px;">
+                    <button type="submit" style="background:#6c7ae0;"><i class="fa fa-image"></i> 生成长图</button>
+                </div>
+            </form>
+            <p class="tips">使用当前数据库中的歌曲名（按现有排序规则）。默认保存到 <code>/static/uploads</code>，结果会在上方提示。</p>
+        </div>
+
+        <div class="panel">
             <h2>安全</h2>
             <form method="post" action="/admin/action" class="backup-box" data-ajax="true" data-token-form="true" data-confirm="确定修改 admin_token 吗？修改后需重新登录">
                 <input type="hidden" name="action" value="update_admin_token">
@@ -406,6 +426,14 @@
             backupInput.addEventListener('change', (e) => {
                 const file = e.target.files && e.target.files[0];
                 fileLabel.textContent = file ? file.name : '选择文件';
+            });
+        }
+        const genInput = document.getElementById('gen-bg-input');
+        const genFileLabel = document.getElementById('gen-file-label');
+        if (genInput && genFileLabel) {
+            genInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                genFileLabel.textContent = file ? file.name : '选择背景';
             });
         }
         function toggleBackupHelp() {

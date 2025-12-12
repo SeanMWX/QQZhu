@@ -10,6 +10,7 @@ import os
 import secrets
 import time
 import io
+from PIL import Image, ImageDraw, ImageFont
 from urllib.parse import quote
 from pypinyin import pinyin, Style
 from dotenv import load_dotenv
@@ -212,6 +213,110 @@ def save_file_field(file_field, prefix):
         content = file_field.file.read()
         f.write(content)
     return f"/static/uploads/{safe_name}"
+
+
+def pick_font(font_path=None, size=38):
+    """Pick a font that exists on the system."""
+    if font_path and os.path.exists(font_path):
+        try:
+            return ImageFont.truetype(font_path, size)
+        except Exception:
+            pass
+    try_fonts = [
+        "msyhl.ttc",
+        "SourceHanSansSC-Light.otf",
+        "msyh.ttc",
+        "simsun.ttc",
+        "STHeiti Light.ttc",
+    ]
+    for tf in try_fonts:
+        try:
+            return ImageFont.truetype(tf, size)
+        except Exception:
+            continue
+    font = ImageFont.load_default()
+    font.size = size
+    return font
+
+
+def wrap_song_names(names, max_chars_per_line=35, max_songs_per_line=6):
+    lines = []
+    current = []
+    current_chars = 0
+    for name in names:
+        name_len = len(name)
+        if current and (current_chars + name_len > max_chars_per_line or len(current) >= max_songs_per_line):
+            lines.append("  ".join(current))
+            current = []
+            current_chars = 0
+        current.append(name)
+        current_chars += name_len + 2
+    if current:
+        lines.append("  ".join(current))
+    return lines
+
+
+def combine_background_img(head_img, content_img, end_img, output_height):
+    head_h = head_img.height
+    content_h = content_img.height
+    end_h = end_img.height
+    width = head_img.width
+    combined = Image.new("RGB", (width, output_height))
+    combined.paste(head_img, (0, 0))
+    content_area_h = output_height - head_h - end_h
+    blocks = max(content_area_h // content_h, 0)
+    for i in range(blocks + 1):
+        y = head_h + i * content_h
+        if y >= output_height - end_h:
+            break
+        combined.paste(content_img, (0, y))
+    combined.paste(end_img, (0, output_height - end_h))
+    return combined
+
+
+def generate_playlist_image_from_bg(bg_bytes, content_start, end_start, names, font_path=None, output_dir="static/uploads"):
+    if not names:
+        raise ValueError("歌曲列表为空")
+    ensure_upload_dir()
+    img = Image.open(io.BytesIO(bg_bytes))
+    width, height = img.size
+    if not (0 <= content_start < end_start <= height):
+        raise ValueError("content_start/end_start 范围非法")
+
+    head = img.crop((0, 0, width, content_start))
+    content = img.crop((0, content_start, width, end_start))
+    tail = img.crop((0, end_start, width, height))
+
+    bg_color = content.getpixel((min(10, content.width - 1), min(10, content.height - 1)))
+    text_color = (30, 30, 30) if sum(bg_color) > 382 else (240, 240, 240)
+
+    lines = wrap_song_names(names)
+    line_height = max(content.height, 80)
+    total_height = head.height + len(lines) * line_height + tail.height
+    canvas = combine_background_img(head, content, tail, total_height)
+
+    font = pick_font(font_path, 38)
+    draw = ImageDraw.Draw(canvas)
+    shadow_color = (
+        (bg_color[0] - 30, bg_color[1] - 30, bg_color[2] - 30)
+        if sum(bg_color) > 382
+        else (0, 0, 0)
+    )
+
+    y = head.height
+    margin_left = 50
+    for line in lines:
+        text_w, text_h = draw.textsize(line, font=font)
+        text_y = y + (line_height - text_h) // 2
+        draw.text((margin_left + 2, text_y + 2), line, font=font, fill=shadow_color)
+        draw.text((margin_left, text_y), line, font=font, fill=text_color)
+        y += line_height
+
+    ts = int(time.time())
+    filename = f"playlist_{ts}.png"
+    path_fs = os.path.join(output_dir, filename)
+    canvas.save(path_fs, quality=95)
+    return f"/static/uploads/{filename}"
 
 
 def wants_json(request):
@@ -651,6 +756,24 @@ async def admin_action(request):
             message = "admin_token 已更新，请重新登录"
             if wants_json(request):
                 return web.json_response({"ok": True, "action": "update_admin_token", "message": message})
+        elif action == "generate_playlist_image":
+            bg_field = form.get("bg_image")
+            if not (bg_field and hasattr(bg_field, "file") and bg_field.filename):
+                raise ValueError("请上传背景图")
+            try:
+                content_start = int(form.get("content_start", 0))
+                end_start = int(form.get("end_start", 0))
+            except Exception:
+                raise ValueError("content_start/end_start 需要是整数")
+            songs_sorted = await fetch_songs_sorted(conn)
+            names = [s["name"] for s in songs_sorted]
+            font_path = form.get("font_path", "").strip() or None
+            generated_path = generate_playlist_image_from_bg(
+                bg_field.file.read(), content_start, end_start, names, font_path=font_path
+            )
+            message = f"长图已生成：{generated_path}"
+            if wants_json(request):
+                return web.json_response({"ok": True, "action": "generate_playlist_image", "path": generated_path})
         else:
             message = "未知操作"
     except Exception as exc:
