@@ -276,7 +276,18 @@ def combine_background_img(head_img, content_img, end_img, output_height):
     return combined
 
 
-def generate_playlist_image_from_bg(bg_bytes, content_start, end_start, names, font_path=None, output_dir="static/uploads"):
+def generate_playlist_image_from_bg(
+    bg_bytes,
+    content_start,
+    end_start,
+    names,
+    font_path=None,
+    font_size=38,
+    max_chars_per_line=35,
+    max_songs_per_line=6,
+    line_height=None,
+    output_dir="static/uploads",
+):
     if not names:
         raise ValueError("歌曲列表为空")
     ensure_upload_dir()
@@ -292,12 +303,16 @@ def generate_playlist_image_from_bg(bg_bytes, content_start, end_start, names, f
     bg_color = content.getpixel((min(10, content.width - 1), min(10, content.height - 1)))
     text_color = (30, 30, 30) if sum(bg_color) > 382 else (240, 240, 240)
 
-    lines = wrap_song_names(names)
-    line_height = max(content.height, 80)
-    total_height = head.height + len(lines) * line_height + tail.height
+    lines = wrap_song_names(
+        names,
+        max_chars_per_line=max_chars_per_line,
+        max_songs_per_line=max_songs_per_line,
+    )
+    resolved_line_height = max(line_height or content.height, 80)
+    total_height = head.height + len(lines) * resolved_line_height + tail.height
     canvas = combine_background_img(head, content, tail, total_height)
 
-    font = pick_font(font_path, 38)
+    font = pick_font(font_path, font_size)
     draw = ImageDraw.Draw(canvas)
     shadow_color = (
         (bg_color[0] - 30, bg_color[1] - 30, bg_color[2] - 30)
@@ -309,10 +324,10 @@ def generate_playlist_image_from_bg(bg_bytes, content_start, end_start, names, f
     margin_left = 50
     for line in lines:
         text_w, text_h = draw.textsize(line, font=font)
-        text_y = y + (line_height - text_h) // 2
+        text_y = y + (resolved_line_height - text_h) // 2
         draw.text((margin_left + 2, text_y + 2), line, font=font, fill=shadow_color)
         draw.text((margin_left, text_y), line, font=font, fill=text_color)
-        y += line_height
+        y += resolved_line_height
 
     ts = int(time.time())
     filename = f"playlist_{ts}.png"
@@ -836,8 +851,21 @@ async def admin_action(request):
             songs_sorted = await fetch_songs_sorted(conn)
             names = [s["name"] for s in songs_sorted]
             font_path = form.get("font_path", "").strip() or None
+            font_size = int(form.get("font_size", 38) or 38)
+            line_height = form.get("line_height")
+            line_height_val = int(line_height) if line_height else None
+            max_chars_per_line = int(form.get("max_chars_per_line", 35) or 35)
+            max_songs_per_line = int(form.get("max_songs_per_line", 6) or 6)
             generated_path = generate_playlist_image_from_bg(
-                bg_field.file.read(), content_start, end_start, names, font_path=font_path
+                bg_field.file.read(),
+                content_start,
+                end_start,
+                names,
+                font_path=font_path,
+                font_size=font_size,
+                max_chars_per_line=max_chars_per_line,
+                max_songs_per_line=max_songs_per_line,
+                line_height=line_height_val,
             )
             if wants_json(request):
                 return web.json_response({"ok": True, "action": "generate_playlist_image", "path": generated_path})
