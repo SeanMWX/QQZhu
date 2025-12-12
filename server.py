@@ -276,6 +276,17 @@ def combine_background_img(head_img, content_img, end_img, output_height):
     return combined
 
 
+def measure_text(draw_obj, text, font):
+    """Measure text size; compatible with Pillow versions where textsize is removed."""
+    if hasattr(draw_obj, "textbbox"):
+        bbox = draw_obj.textbbox((0, 0), text, font=font)
+        return bbox[2] - bbox[0], bbox[3] - bbox[1]
+    if hasattr(draw_obj, "textsize"):
+        return draw_obj.textsize(text, font=font)
+    # Fallback to font.getsize
+    return font.getsize(text)
+
+
 def generate_playlist_image_from_bg(
     bg_bytes,
     content_start,
@@ -323,7 +334,7 @@ def generate_playlist_image_from_bg(
     y = head.height
     margin_left = 50
     for line in lines:
-        text_w, text_h = draw.textsize(line, font=font)
+        text_w, text_h = measure_text(draw, line, font)
         text_y = y + (resolved_line_height - text_h) // 2
         draw.text((margin_left + 2, text_y + 2), line, font=font, fill=shadow_color)
         draw.text((margin_left, text_y), line, font=font, fill=text_color)
@@ -381,7 +392,7 @@ def generate_playlist_pages_from_bg(
         draw = ImageDraw.Draw(canvas)
         y = y1
         for line in page_lines:
-            text_w, text_h = draw.textsize(line, font=font)
+            text_w, text_h = measure_text(draw, line, font)
             text_y = y + (line_height - text_h) // 2
             draw.text((x1 + 2, text_y + 2), line, font=font, fill=shadow_color)
             draw.text((x1, text_y), line, font=font, fill=text_color)

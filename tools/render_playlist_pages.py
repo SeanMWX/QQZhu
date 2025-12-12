@@ -115,6 +115,14 @@ def render_pages(
 
     font = pick_font(font_path, font_size)
 
+    def measure(draw_obj: ImageDraw.ImageDraw, text: str) -> Tuple[int, int]:
+        if hasattr(draw_obj, "textbbox"):
+            bbox = draw_obj.textbbox((0, 0), text, font=font)
+            return bbox[2] - bbox[0], bbox[3] - bbox[1]
+        if hasattr(draw_obj, "textsize"):
+            return draw_obj.textsize(text, font=font)
+        return font.getsize(text)
+
     output_files: list[Path] = []
     for page in range(pages):
         start = page * lines_per_page
@@ -125,7 +133,7 @@ def render_pages(
         draw = ImageDraw.Draw(canvas)
         y = y1
         for line in page_lines:
-            text_w, text_h = draw.textsize(line, font=font)
+            text_w, text_h = measure(draw, line)
             text_y = y + (line_height - text_h) // 2
             draw.text((x1 + 2, text_y + 2), line, font=font, fill=shadow_color)
             draw.text((x1, text_y), line, font=font, fill=text_color)
