@@ -392,7 +392,7 @@
                 <input type="hidden" name="action" value="generate_playlist_image">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-                <div style="flex:1; min-width:260px;">上传完整背景图，填写 content_start / end_start，按当前歌曲名排序生成长图。</div>
+                <div style="flex:1; min-width:260px;">上传完整背景图，填写 content_start / end_start，按当前歌曲名排序生成长图。<a class="info-link" href="#" onclick="toggleLongHelp(); return false;">格式说明</a></div>
                 <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
                     <label class="file-input">
                         <span class="btn"><i class="fa fa-file"></i> <span id="gen-file-label">选择背景</span></span>
@@ -412,6 +412,10 @@
                 </div>
             </form>
             <p class="tips">使用当前数据库中的歌曲名（按现有排序规则）。提交后会直接下载生成的长图，同时也会保存到 <code>/static/uploads</code>。</p>
+            <div id="long-help" style="display:none; font-size:13px; color:#555; margin-top:8px;">
+                <strong>示例：</strong> 以下为<code>content_start</code> 和 <code>end_start</code> 的示例说明。<br/>
+                <img src="/static/sample_longimage.png" alt="长图示例" style="max-width:100%; border:1px solid #eee; border-radius:8px; margin-top:6px;">
+            </div>
         </div>
 
         <div class="panel">
@@ -420,7 +424,7 @@
                 <input type="hidden" name="action" value="generate_playlist_pages">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
                 {% if token %}<input type="hidden" name="token" value="{{ token }}">{% endif %}
-                <div style="flex:1; min-width:260px;">上传背景图，设置文本区域左上/右下坐标（x1,y1,x2,y2），按当前歌曲名分页生成与背景同尺寸的小图。</div>
+                <div style="flex:1; min-width:260px;">上传背景图，设置文本区域左上/右下坐标（x1,y1,x2,y2），按当前歌曲名分页生成与背景同尺寸的小图。<a class="info-link" href="#" onclick="toggleSmallHelp(); return false;">格式说明</a></div>
                 <div class="backup-actions" style="flex-wrap:wrap; gap:8px;">
                     <label class="file-input">
                         <span class="btn"><i class="fa fa-file"></i> <span id="gen-small-file-label">选择背景</span></span>
@@ -442,6 +446,10 @@
                 </div>
             </form>
             <p class="tips">使用当前数据库中的歌曲名（按现有排序规则）。提交后会直接下载包含所有小图的 ZIP，也会保存到 <code>/static/uploads</code>。</p>
+            <div id="small-help" style="display:none; font-size:13px; color:#555; margin-top:8px;">
+                <strong>示例：</strong> 以下为<code>(x1,y1)</code> 和 <code>(x2,y2)</code> 的示例说明。<br/>
+                <img src="/static/sample_sepimages.png" alt="小图示例" style="max-width:100%; border:1px solid #eee; border-radius:8px; margin-top:6px;">
+            </div>
         </div>
 
         <div class="panel">
@@ -484,6 +492,14 @@
         }
         function toggleBackupHelp() {
             const help = document.getElementById('backup-help');
+            if (help) help.style.display = help.style.display === 'none' ? 'block' : 'none';
+        }
+        function toggleLongHelp() {
+            const help = document.getElementById('long-help');
+            if (help) help.style.display = help.style.display === 'none' ? 'block' : 'none';
+        }
+        function toggleSmallHelp() {
+            const help = document.getElementById('small-help');
             if (help) help.style.display = help.style.display === 'none' ? 'block' : 'none';
         }
     </script>
